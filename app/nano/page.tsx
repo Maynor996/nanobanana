@@ -79,13 +79,15 @@ export default function NanoPage() {
         finalPrompt = `${getStylePrompt(style)} ${prompt}`
       }
 
-      const response = await fetch('/api/gemini', {
+      const apiEndpoint = mode === 'text' ? '/api/generate' : '/api/gemini'
+      const requestBody = mode === 'text' 
+        ? { prompt: finalPrompt }
+        : { prompt: finalPrompt, imageData }
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: finalPrompt, 
-          imageData 
-        })
+        body: JSON.stringify(requestBody)
       })
 
       const data = await response.json()
@@ -737,7 +739,7 @@ export default function NanoPage() {
               fontSize: '0.9rem',
               color: '#ef4444'
             }}>
-              {mode === 'text' ? '请输入至少 3 个字符的描述' : '积分不足，需要 4 积分'}
+              {mode === 'text' ? '请输入至少 3 个字符的描述' : ''}
             </p>
           </div>
         </div>
@@ -753,10 +755,10 @@ export default function NanoPage() {
           <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
             🎉 生成结果
           </h3>
-          {result.imageData ? (
+          {(result.imageData || result.imageUrl) ? (
             <div style={{ textAlign: 'center' }}>
               <img 
-                src={`data:${result.mimeType};base64,${result.imageData}`}
+                src={result.imageUrl || `data:${result.mimeType};base64,${result.imageData}`}
                 alt="Generated"
                 style={{ 
                   maxWidth: '100%',
@@ -782,7 +784,7 @@ export default function NanoPage() {
               padding: '2rem',
               textAlign: 'center'
             }}>
-              <p style={{ fontSize: '1.1rem' }}>{result.text || result.message}</p>
+              <p style={{ fontSize: '1.1rem' }}>{result.text || result.content || result.message}</p>
             </div>
           )}
         </div>

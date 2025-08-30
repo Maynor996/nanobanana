@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'API配置缺失' }, { status: 500 })
     }
 
+
     // 构建请求内容
     const parts: any[] = [
       {
