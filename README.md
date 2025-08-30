@@ -1,73 +1,185 @@
-# Gemini 2.5 Flash 图片生成器 MVP 🎨
+# 🍌 Gemini Nano Banana Plus
 
-使用 MaynorAPI 提供的 Gemini 2.5 Flash Image Preview 模型的极简图片生成器
+A beautiful Next.js web application powered by Google's Gemini 2.5 Flash Image Preview model for AI image generation and editing.
 
-## 快速开始
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/xianyu110/gemini-nanobanana-plus)
 
-1. 安装依赖：
-```bash
-npm install
+## ✨ Features
+
+### 🎨 AI Image Generation
+- **Text-to-Image**: Generate images from text descriptions
+- **Image Editing**: Upload images and edit them through natural conversation
+- **Multiple Styles**: Enhanced details, artistic, anime, and photorealistic styles
+- **Batch Generation**: Generate 1-4 images at once
+
+### 🎯 User Experience
+- **Beautiful UI**: Modern dark theme with gradient backgrounds and smooth animations
+- **Responsive Design**: Works perfectly on desktop and mobile devices  
+- **Real-time Preview**: Instant feedback and loading animations
+- **Multiple Modes**: Switch between upload and text generation modes
+
+### 🔧 Technical Features
+- **Next.js 14**: Server-side rendering and API routes
+- **TypeScript**: Type-safe development
+- **Gemini 2.5 Flash**: Latest Google AI model for image generation
+- **Vercel Ready**: Optimized for seamless deployment
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ 
+- A Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/xianyu110/gemini-nanobanana-plus.git
+   cd gemini-nanobanana-plus
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   Edit `.env.local` and add your API key:
+   ```
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 🌐 Deploy to Vercel
+
+### One-Click Deploy
+Click the button above to deploy directly to Vercel.
+
+### Manual Deployment
+
+1. **Fork this repository** on GitHub
+
+2. **Import to Vercel**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "New Project"
+   - Import your forked repository
+
+3. **Configure Environment Variables**
+   In your Vercel project settings, add:
+   ```
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+4. **Deploy**
+   Vercel will automatically build and deploy your project
+
+## 🎯 Usage Guide
+
+### Available Pages
+- **Main App**: `/nano` - Full-featured Nano Banana interface
+- **MVP Demo**: `/mvp` - Simple demo version
+- **Home**: `/` - Landing page
+
+### Text-to-Image Generation
+1. Select "文生图模式" (Text-to-Image mode)
+2. Enter your description in Chinese or English
+3. Choose a style (Enhanced, Artistic, Anime, Photo)
+4. Select number of images to generate (1-4)
+5. Click "开始生成" (Start Generation)
+
+### Image Editing
+1. Select "通过对话编辑图像" (Image Editing mode)
+2. Upload an image (PNG, JPG, WebP supported)
+3. Describe the changes you want to make
+4. Choose a style and generate
+
+### Example Prompts
+- **中文**: "一只可爱的橘猫坐在彩虹桥上，梦幻风格，柔和光线"
+- **English**: "A cute orange cat sitting on a rainbow bridge, dreamy style, soft lighting"
+- **编辑**: "将这张图片转换为油画风格，增加温暖色调"
+
+## 🛠️ Development
+
+### Project Structure
+```
+gemini-nano-banana/
+├── app/
+│   ├── api/
+│   │   ├── gemini/          # Main Gemini API endpoint
+│   │   ├── generate/        # Alternative generation endpoint
+│   │   └── generate-demo/   # Demo endpoint
+│   ├── nano/                # Main application page
+│   ├── mvp/                 # MVP demo page
+│   └── layout.tsx           # Root layout
+├── public/                  # Static assets
+├── .env.example            # Environment variables template
+├── vercel.json            # Vercel deployment config
+└── README.md              # Project documentation
 ```
 
-2. 运行开发服务器：
-```bash
-npm run dev
-```
+### Available Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
 
-3. 访问应用：
-   - 经典界面: http://localhost:3000
-   - MVP 界面: http://localhost:3000/mvp
-   - 🍌 **Nano 界面**: http://localhost:3000/nano (全新暗黑主题)
+### API Endpoints
+- `/api/gemini` - Main image generation API
+- `/api/generate` - Alternative generation endpoint
+- `/api/generate-demo` - Demo endpoint
 
-## 功能特点
+## 🔑 Environment Variables
 
-- 🚀 使用 MaynorAPI 提供的 Gemini 2.5 Flash Image Preview 模型
-- 🎨 输入文字描述请求图片生成
-- ⚡ 简洁的用户界面
-- 🔧 基于 Next.js 14 构建
-- 📝 支持查看模型响应内容
-- 🍌 **新增 Nano Banana 现代化界面**
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `GEMINI_API_KEY` | Your Gemini API key from Google AI Studio | ✅ |
+| `MAYNOR_API_KEY` | Alternative API key (optional) | ❌ |
+| `MAYNOR_API_URL` | Alternative API URL (optional) | ❌ |
 
-## API 配置
+## 🌟 UI Features
 
-本项目已预配置 MaynorAPI：
-- API地址: https://apipro.maynor1024.live/v1
-- 模型: gemini-2.5-flash-image-preview
+### 🍌 Nano Banana Interface
+- **Modern Dark Theme**: Eye-friendly design with gradient backgrounds
+- **Smooth Animations**: Hover effects and loading animations
+- **Responsive Layout**: Perfect on desktop and mobile
+- **Interactive Elements**: Enhanced buttons, inputs, and cards
 
-## 注意事项
+### Visual Elements
+- **Gradient Cards**: Beautiful background gradients
+- **Glowing Effects**: Subtle shadows and glows
+- **Smooth Transitions**: 0.3s ease transitions throughout
+- **Loading States**: Rotating gear icon and pulse animations
 
-- 每次生成会消耗 API 额度
-- Gemini 模型可能返回文本描述而非直接图片
-- 模型响应格式可能包含 Markdown 或 URL
+## 📝 License
 
-## 部署
+This project is open source and available under the [MIT License](LICENSE).
 
-支持一键部署到 Vercel：
+## 🤝 Contributing
 
-```bash
-npm run build
-npm start
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-环境变量已在 .env.local 中配置完成。
+## 💡 Support
 
-## 🍌 Nano Banana 界面
+If you encounter any issues or have questions:
+1. Check the [Issues](https://github.com/xianyu110/gemini-nanobanana-plus/issues) page
+2. Create a new issue with detailed information
+3. Join our community discussions
 
-全新的现代化暗黑主题界面，提供更优雅的用户体验：
+## 🌟 Acknowledgments
 
-### 特色功能
-- **双模式支持**：图片编辑模式 & 文生图模式
-- **快速风格**：增强细节、艺术风格、动漫风格、写实照片
-- **灵感启发**：8 个预设提示词快速开始
-- **批量生成**：支持 1-4 张图片同时生成
-- **暗黑主题**：护眼的深色界面设计
+- [Google Gemini](https://gemini.google.com) for the powerful AI model
+- [Next.js](https://nextjs.org) for the amazing framework
+- [Vercel](https://vercel.com) for seamless deployment
 
-### 访问方式
-- Next.js 应用：http://localhost:3000/nano
-- 独立测试页：直接打开 `nano-test.html`
+---
 
-### 界面预览
-- 🎨 现代化的卡片式布局
-- 🌙 优雅的暗黑配色方案
-- ✨ 流畅的交互动画
-- 📱 完美的响应式设计
+**Made with ❤️ using Google Gemini 2.5 Flash Image Preview**

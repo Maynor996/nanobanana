@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请提供描述' }, { status: 400 })
     }
 
-    const apiKey = process.env.MAYNOR_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY || process.env.MAYNOR_API_KEY
     const model = 'gemini-2.5-flash-image-preview'
 
     if (!apiKey) {
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
           generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 4096,
-            responseModalities: imageData ? ["TEXT", "IMAGE"] : ["TEXT"]
+            responseModalities: ["TEXT", "IMAGE"]
           }
         })
       }
@@ -76,11 +76,11 @@ export async function POST(request: NextRequest) {
       if (content && content.parts) {
         // 检查是否有生成的图片
         for (const part of content.parts) {
-          if (part.inline_data) {
+          if (part.inlineData) {
             // 返回生成的图片数据
             return NextResponse.json({ 
-              imageData: part.inline_data.data,
-              mimeType: part.inline_data.mime_type,
+              imageData: part.inlineData.data,
+              mimeType: part.inlineData.mimeType,
               text: content.parts.find((p: any) => p.text)?.text || ''
             })
           }
