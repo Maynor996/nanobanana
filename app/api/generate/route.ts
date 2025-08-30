@@ -18,9 +18,6 @@ export async function POST(request: NextRequest) {
     // 使用 Gemini 2.5 Flash Image Preview 模型
     const model = 'gemini-2.5-flash-image-preview'
     
-    // 注意: Gemini 模型需要图片输入，这里我们创建一个简单的白色图片作为参考
-    const sampleImage = "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAAQABADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAr/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
-    
     const response = await fetch(
       `${apiUrl}/models/${model}:generateContent?key=${apiKey}`,
       {
@@ -35,12 +32,6 @@ export async function POST(request: NextRequest) {
               parts: [
                 {
                   text: `Generate an image based on this description: ${prompt}. Please generate a high-quality image, not just text.`
-                },
-                {
-                  inline_data: {
-                    mime_type: 'image/jpeg',
-                    data: sampleImage
-                  }
                 }
               ]
             }
