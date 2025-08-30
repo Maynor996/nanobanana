@@ -1,15 +1,7 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "nextjs",
   "functions": {
-    "app/api/*/route.ts": {
+    "app/api/**/*.ts": {
       "maxDuration": 60
     }
-  },
-  "limits": {
-    "maxRequestBodySize": 10485760
   }
 }
