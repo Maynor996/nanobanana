@@ -36,7 +36,7 @@ JavaScript
 Go
 REST
 curl -s -X POST
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent" \
+  "https://apipro.maynor1024.live/v1beta/models/gemini-2.5-flash-image-preview:generateContent" \
   -H "x-goog-api-key: $GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -71,7 +71,7 @@ fi
 IMG_BASE64=$(base64 "$B64FLAGS" "$IMG_PATH" 2>&1)
 
 curl -X POST \
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent" \
+  "https://apipro.maynor1024.live/v1beta/models/gemini-2.5-flash-image-preview:generateContent" \
     -H "x-goog-api-key: $GEMINI_API_KEY" \
     -H 'Content-Type: application/json' \
     -d "{

@@ -12,49 +12,45 @@ export async function POST(request: NextRequest) {
     }
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.MAYNOR_API_KEY
+    const apiUrl = process.env.MAYNOR_API_URL || 'https://apipro.maynor1024.live'
     const model = 'gemini-2.5-flash-image-preview'
 
     if (!apiKey) {
       return NextResponse.json({ error: 'API配置缺失' }, { status: 500 })
     }
 
+    // 构建请求内容 - 根据maynor API文档格式
+    const parts: any[] = []
 
-    // 构建请求内容
-    const parts: any[] = [
-      {
-        text: prompt
-      }
-    ]
-
-    // 如果有图片数据，添加到请求中
     if (imageData) {
+      // 图片编辑模式
+      parts.push({ text: prompt })
       parts.push({
         inline_data: {
           mime_type: "image/jpeg",
           data: imageData
         }
       })
+    } else {
+      // 纯文生图模式
+      parts.push({ text: `Create a picture: ${prompt}` })
     }
 
-    // 使用正确的 Gemini API 格式
+    // 使用正确的 maynor API 格式
     const response = await fetch(
-      `https://apipro.maynor1024.live/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      `${apiUrl}/models/${model}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
         },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: parts
-            }
-          ],
+          contents: [{
+            parts: parts
+          }],
           generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 4096,
-            responseModalities: ["TEXT", "IMAGE"]
+            responseModalities: ["IMAGE"]  // 只要求图片输出
           }
         })
       }

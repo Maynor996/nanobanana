@@ -12,37 +12,32 @@ export async function POST(request: NextRequest) {
     }
 
     const apiKey = process.env.MAYNOR_API_KEY
-    const apiUrl = process.env.MAYNOR_API_URL
+    const apiUrl = process.env.MAYNOR_API_URL || 'https://apipro.maynor1024.live'
 
-    if (!apiKey || !apiUrl) {
+    if (!apiKey) {
       return NextResponse.json({ error: 'API配置缺失' }, { status: 500 })
     }
 
     // 使用 Gemini 2.5 Flash Image Preview 模型
     const model = 'gemini-2.5-flash-image-preview'
     
+    // 根据maynor API文档格式构建请求
     const response = await fetch(
       `${apiUrl}/models/${model}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
         },
         body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: `Generate an image based on this description: ${prompt}. Please generate a high-quality image, not just text.`
-                }
-              ]
-            }
-          ],
+          contents: [{
+            parts: [
+              { text: `Create a picture: ${prompt}` }
+            ]
+          }],
           generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 4096,
-            responseModalities: ['TEXT', 'IMAGE']
+            responseModalities: ["IMAGE"]  // 只要求图片输出
           }
         })
       }
@@ -110,9 +105,24 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   } catch (error) {
     console.error('生成错误:', error)
+    
+    // 更详细的错误信息
+    let errorMessage = '生成失败'
+    let errorDetails = '未知错误'
+    
+    if (error instanceof Error) {
+      errorDetails = error.message
+      if (error.message.includes('fetch')) {
+        errorMessage = 'API连接失败，请稍后重试'
+      } else if (error.message.includes('timeout')) {
+        errorMessage = '请求超时，请使用简短描述重试'
+      }
+    }
+    
     return NextResponse.json({ 
-      error: '生成失败', 
-      details: error instanceof Error ? error.message : '未知错误' 
+      error: errorMessage, 
+      details: errorDetails,
+      timestamp: new Date().toISOString()
     }, { status: 500 })
   }
 }
