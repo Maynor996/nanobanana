@@ -40,6 +40,41 @@ export default function NanoPage() {
     }
   }
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const files = e.dataTransfer.files
+    if (files && files[0]) {
+      const file = files[0]
+      if (file.type.startsWith('image/')) {
+        setImageFile(file)
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string)
+        }
+        reader.readAsDataURL(file)
+      } else {
+        alert('请上传图片文件')
+      }
+    }
+  }
+
   const compressImage = (file: File, maxWidth = 1024, maxHeight = 1024, quality = 0.8): Promise<File> => {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas')
@@ -298,20 +333,32 @@ export default function NanoPage() {
         {/* Left Panel */}
         <div style={{ flex: 1 }}>
           {mode === 'upload' ? (
-            <div style={{
-              background: 'linear-gradient(135deg, #111111, #1a1a1a)',
-              border: '2px dashed rgba(16, 185, 129, 0.3)',
-              borderRadius: '1.5rem',
-              padding: '4rem 2rem',
-              textAlign: 'center',
-              minHeight: '400px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.3s ease'
-            }}>
+            <div 
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              style={{
+                background: 'linear-gradient(135deg, #111111, #1a1a1a)',
+                border: '2px dashed rgba(16, 185, 129, 0.3)',
+                borderRadius: '1.5rem',
+                padding: '4rem 2rem',
+                textAlign: 'center',
+                minHeight: '400px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (!imagePreview) {
+                  document.getElementById('file-upload')?.click()
+                }
+              }}
+            >
               {imagePreview ? (
                 <div>
                   <img 
@@ -343,11 +390,12 @@ export default function NanoPage() {
                 </div>
               ) : (
                 <>
-                  <div style={{ fontSize: '3rem', color: '#10b981', marginBottom: '1rem' }}>⬆️</div>
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>拖拽或点击上传图片</h3>
-                  <p style={{ color: '#666', marginBottom: '1rem' }}>
-                    支持 PNG, JPG, JPEG, WebP, GIF 格式<br />
-                    单个文件最大 10MB，还可上传 10 张
+                  <div style={{ fontSize: '3rem', color: '#10b981', marginBottom: '1rem' }}>📸</div>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#10b981' }}>拖拽图片到此处或点击上传</h3>
+                  <p style={{ color: '#888', marginBottom: '1rem', lineHeight: '1.5' }}>
+                    💡 支持 PNG, JPG, JPEG, WebP, GIF 格式<br />
+                    📏 单个文件最大 10MB<br />
+                    🎨 上传后可通过对话描述编辑需求
                   </p>
                   <input
                     type="file"
@@ -378,7 +426,7 @@ export default function NanoPage() {
                       e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)'
                     }}
                   >
-                    选择文件
+                    📁 选择图片文件
                   </label>
                 </>
               )}
