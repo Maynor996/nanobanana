@@ -221,20 +221,28 @@ export default function NanoPage() {
           </h1>
           <nav style={{ display: 'flex', gap: '1.5rem' }}>
             <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>功能特点</button>
-            <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>定价</button>
+            <button 
+              onClick={() => window.location.href = '/pricing'}
+              style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
+            >
+              定价
+            </button>
             <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>案例展示</button>
           </nav>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <span>中文</span>
-          <button style={{
-            backgroundColor: '#10b981',
-            color: 'white',
-            border: 'none',
-            padding: '0.5rem 1.5rem',
-            borderRadius: '0.5rem',
-            cursor: 'pointer'
-          }}>
+          <button 
+            onClick={() => window.location.href = '/pricing'}
+            style={{
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              padding: '0.5rem 1.5rem',
+              borderRadius: '0.5rem',
+              cursor: 'pointer'
+            }}
+          >
             获取 Nano Banana →
           </button>
           <button style={{
