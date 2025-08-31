@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           contents: [{
+            role: "user",
             parts: [
               { text: `Create a picture: ${prompt}` }
             ]

@@ -6,62 +6,6 @@ import './nano.css'
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
 
-// SVG图标组件
-const SVGIcon = ({ type, size = 16 }: { type: string; size?: number }) => {
-  const icons: Record<string, JSX.Element> = {
-    landscape: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 6L10.25 11L13.1 14.8L11.5 16C9.81 13.75 7 10 7 10L1 18H23L14 6Z" fill="currentColor"/>
-        <circle cx="17" cy="8" r="2" fill="currentColor"/>
-      </svg>
-    ),
-    portrait: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
-      </svg>
-    ),
-    building: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 3L2 12H5V20H19V12H22L12 3ZM12 7.69L17 12.19V18H15V14H9V18H7V12.19L12 7.69Z" fill="currentColor"/>
-      </svg>
-    ),
-    art: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.59 10.75C10.21 11.13 10 11.62 10 12.13V13.5C10 14.33 10.67 15 11.5 15H13C13.55 15 14 14.55 14 14V12.5L19.5 7H21ZM7.91 17.91C7.91 17.91 4.91 15.91 2 18.82L3.41 20.23L6.5 17.14L7.91 17.91Z" fill="currentColor"/>
-      </svg>
-    ),
-    scifi: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" fill="currentColor"/>
-        <circle cx="12" cy="12" r="3" fill="currentColor"/>
-      </svg>
-    ),
-    nature: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.17 22L6.58 19.58C8.81 20.81 11.55 21.5 14.5 21.5C19.14 21.5 22.5 18.36 22.5 14.5C22.5 11.1 20.59 8.5 17 8Z" fill="currentColor"/>
-        <path d="M12.5 7C12.5 7 14 1.5 9 1.5S6.5 7 6.5 7C6.5 7 1 5.5 1 10.5S6.5 12.5 6.5 12.5C6.5 12.5 5 18 10 18S12.5 12.5 12.5 12.5C12.5 12.5 18 14 18 9S12.5 7 12.5 7Z" fill="currentColor"/>
-      </svg>
-    ),
-    animal: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="4.5" cy="9.5" r="2.5" fill="currentColor"/>
-        <circle cx="9" cy="5.5" r="2.5" fill="currentColor"/>
-        <circle cx="15" cy="5.5" r="2.5" fill="currentColor"/>
-        <circle cx="19.5" cy="9.5" r="2.5" fill="currentColor"/>
-        <path d="M17.34 14.86C16.44 13.73 15.09 13 13.5 13H10.5C8.91 13 7.56 13.73 6.66 14.86C6.12 15.58 6 16.5 6 17.5C6 19.43 7.57 21 9.5 21H14.5C16.43 21 18 19.43 18 17.5C18 16.5 17.88 15.58 17.34 14.86Z" fill="currentColor"/>
-      </svg>
-    ),
-    creative: (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 21C9 21 3.5 15.5 3.5 9.5C3.5 5.91 6.41 3 10 3C13.59 3 16.5 5.91 16.5 9.5C16.5 15.5 11 21 11 21H9ZM6.5 9.5C6.5 7.29 8.29 5.5 10.5 5.5C12.71 5.5 14.5 7.29 14.5 9.5C14.5 11.71 12.71 13.5 10.5 13.5C8.29 13.5 6.5 11.71 6.5 9.5Z" fill="currentColor"/>
-        <circle cx="10.5" cy="9.5" r="2.5" fill="currentColor"/>
-      </svg>
-    )
-  }
-  
-  return icons[type] || <span>💡</span>
-}
-
 export default function NanoPage() {
   const [mode, setMode] = useState<Mode>('text')
   const [prompt, setPrompt] = useState('')
@@ -74,14 +18,14 @@ export default function NanoPage() {
   const [credits] = useState(4)
 
   const quickPrompts = [
-    { icon: 'landscape', text: '风景', value: '美丽的自然风景' },
-    { icon: 'portrait', text: '人像', value: '专业人像摄影' },
-    { icon: 'building', text: '建筑', value: '现代建筑设计' },
-    { icon: 'art', text: '艺术', value: '抽象艺术作品' },
-    { icon: 'scifi', text: '科幻', value: '科幻场景' },
-    { icon: 'nature', text: '自然', value: '自然生态' },
-    { icon: 'animal', text: '动物', value: '可爱的动物' },
-    { icon: 'creative', text: '创意', value: '创意设计' }
+    { icon: '🏔️', text: '风景', value: '美丽的自然风景' },
+    { icon: '👥', text: '人像', value: '专业人像摄影' },
+    { icon: '🏛️', text: '建筑', value: '现代建筑设计' },
+    { icon: '🎨', text: '艺术', value: '抽象艺术作品' },
+    { icon: '🚀', text: '科幻', value: '科幻场景' },
+    { icon: '🌿', text: '自然', value: '自然生态' },
+    { icon: '🐾', text: '动物', value: '可爱的动物' },
+    { icon: '💡', text: '创意', value: '创意设计' }
   ]
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -497,7 +441,7 @@ export default function NanoPage() {
                         e.currentTarget.style.boxShadow = 'none'
                       }}
                     >
-                      <SVGIcon type={item.icon} />
+                      <span>{item.icon}</span>
                       <span>{item.text}</span>
                     </button>
                   ))}
