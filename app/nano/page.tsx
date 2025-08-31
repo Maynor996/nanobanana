@@ -596,21 +596,9 @@ export default function NanoPage() {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <h4 style={{ fontSize: '0.9rem', marginBottom: '1rem', color: '#888' }}>快速风格</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <button
-                  onClick={() => setStyle('none')}
-                  style={{
-                    ...styleButtonStyle,
-                    backgroundColor: style === 'none' ? '#10b98120' : 'transparent',
-                    borderColor: style === 'none' ? '#10b981' : '#333',
-                    color: style === 'none' ? '#10b981' : '#888',
-                    gridColumn: '1 / -1'  // 占满整行
-                  }}
-                >
-                  ⭕ 不选择风格
-                </button>
-                <button
-                  onClick={() => setStyle('enhance')}
+                  onClick={() => setStyle(style === 'enhance' ? 'none' : 'enhance')}
                   style={{
                     ...styleButtonStyle,
                     backgroundColor: style === 'enhance' ? '#10b98120' : 'transparent',
@@ -621,7 +609,7 @@ export default function NanoPage() {
                   🔍 增强细节
                 </button>
                 <button
-                  onClick={() => setStyle('artistic')}
+                  onClick={() => setStyle(style === 'artistic' ? 'none' : 'artistic')}
                   style={{
                     ...styleButtonStyle,
                     backgroundColor: style === 'artistic' ? '#10b98120' : 'transparent',
@@ -632,7 +620,7 @@ export default function NanoPage() {
                   🎨 艺术风格
                 </button>
                 <button
-                  onClick={() => setStyle('anime')}
+                  onClick={() => setStyle(style === 'anime' ? 'none' : 'anime')}
                   style={{
                     ...styleButtonStyle,
                     backgroundColor: style === 'anime' ? '#10b98120' : 'transparent',
@@ -643,7 +631,7 @@ export default function NanoPage() {
                   ✨ 动漫风格
                 </button>
                 <button
-                  onClick={() => setStyle('photo')}
+                  onClick={() => setStyle(style === 'photo' ? 'none' : 'photo')}
                   style={{
                     ...styleButtonStyle,
                     backgroundColor: style === 'photo' ? '#10b98120' : 'transparent',
