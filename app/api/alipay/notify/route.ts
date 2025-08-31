@@ -7,9 +7,12 @@ export async function POST(request: NextRequest) {
   try {
     // Get form data from Alipay callback
     const formData = await request.formData()
+    // 解析表单数据
     const params: Record<string, string> = {}
     
-    for (const [key, value] of formData.entries()) {
+    // 修复TypeScript编译错误 - 使用Array.from处理FormData
+    const entries = Array.from(formData.entries())
+    for (const [key, value] of entries) {
       params[key] = value.toString()
     }
 
@@ -73,9 +76,12 @@ export async function POST(request: NextRequest) {
 // Handle GET requests (for testing)
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
+  // 解析URL参数
   const params: Record<string, string> = {}
   
-  for (const [key, value] of url.searchParams.entries()) {
+  // 修复TypeScript编译错误 - 使用Array.from处理URLSearchParams
+  const urlEntries = Array.from(url.searchParams.entries())
+  for (const [key, value] of urlEntries) {
     params[key] = value
   }
 

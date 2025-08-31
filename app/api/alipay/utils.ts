@@ -63,21 +63,24 @@ export class AlipayService {
 
   // Create face-to-face payment QR code
   async createF2FPay(order: PaymentOrder): Promise<string> {
-    const params = {
+    const bizContent = {
+      out_trade_no: order.out_trade_no,
+      total_amount: order.total_amount,
+      subject: order.subject,
+      timeout_express: order.timeout_express || '30m'
+    }
+
+    // 构建请求参数
+    const params: Record<string, string> & { sign?: string } = {
       app_id: this.config.app_id,
-      method: 'alipay.trade.precreate',
+      method: 'alipay.trade.create',
       format: 'JSON',
       charset: 'utf-8',
       sign_type: 'RSA2',
-      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      timestamp: new Date().toISOString().replace(/[T\-:]/g, '').slice(0, 14),
       version: '1.0',
       notify_url: this.config.notify_url,
-      biz_content: JSON.stringify({
-        out_trade_no: order.out_trade_no,
-        total_amount: order.total_amount,
-        subject: order.subject,
-        timeout_express: order.timeout_express || '30m'
-      })
+      biz_content: JSON.stringify(bizContent)
     }
 
     params.sign = this.generateSign(params)
@@ -98,17 +101,20 @@ export class AlipayService {
 
   // Query payment status
   async queryPay(out_trade_no: string): Promise<string> {
-    const params = {
+    const bizContent = {
+      out_trade_no: out_trade_no
+    }
+    
+    // 构建请求参数
+    const params: Record<string, string> & { sign?: string } = {
       app_id: this.config.app_id,
       method: 'alipay.trade.query',
       format: 'JSON',
       charset: 'utf-8',
       sign_type: 'RSA2',
-      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      timestamp: new Date().toISOString().replace(/[T\-:]/g, '').slice(0, 14),
       version: '1.0',
-      biz_content: JSON.stringify({
-        out_trade_no: out_trade_no
-      })
+      biz_content: JSON.stringify(bizContent)
     }
 
     params.sign = this.generateSign(params)
