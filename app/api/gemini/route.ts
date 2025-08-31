@@ -51,7 +51,9 @@ export async function POST(request: NextRequest) {
             parts: parts
           }],
           generationConfig: {
-            responseModalities: ["IMAGE"]  // 只要求图片输出
+            responseModalities: ["TEXT", "IMAGE"],  // 支持文本和图片输出
+            temperature: 0.7,
+            maxOutputTokens: 4096
           }
         })
       }
