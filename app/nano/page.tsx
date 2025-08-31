@@ -4,14 +4,14 @@ import { useState } from 'react'
 import './nano.css'
 
 type Mode = 'upload' | 'text'
-type Style = 'enhance' | 'artistic' | 'anime' | 'photo'
+type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
 
 export default function NanoPage() {
   const [mode, setMode] = useState<Mode>('text')
   const [prompt, setPrompt] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState('')
-  const [style, setStyle] = useState<Style>('enhance')
+  const [style, setStyle] = useState<Style>('none')
   const [imageCount, setImageCount] = useState(1)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -112,11 +112,13 @@ export default function NanoPage() {
 
       if (mode === 'upload' && imageFile) {
         imageData = await convertToBase64(imageFile)
-        finalPrompt = `${getStylePrompt(style)} ${prompt || '优化这张图片'}`
+        const stylePrompt = getStylePrompt(style)
+        finalPrompt = stylePrompt ? `${stylePrompt} ${prompt || '优化这张图片'}` : (prompt || '优化这张图片')
       } else {
         // 文生图模式不需要图片数据
         imageData = null
-        finalPrompt = `${getStylePrompt(style)} ${prompt}`
+        const stylePrompt = getStylePrompt(style)
+        finalPrompt = stylePrompt ? `${stylePrompt} ${prompt}` : prompt
       }
 
       const apiEndpoint = mode === 'text' ? '/api/generate' : '/api/gemini'
@@ -147,6 +149,7 @@ export default function NanoPage() {
 
   const getStylePrompt = (style: Style): string => {
     const styles = {
+      none: '',
       enhance: '增强细节，提高画质',
       artistic: '艺术风格，油画效果',
       anime: '动漫风格，二次元',
@@ -593,7 +596,19 @@ export default function NanoPage() {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <h4 style={{ fontSize: '0.9rem', marginBottom: '1rem', color: '#888' }}>快速风格</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                <button
+                  onClick={() => setStyle('none')}
+                  style={{
+                    ...styleButtonStyle,
+                    backgroundColor: style === 'none' ? '#10b98120' : 'transparent',
+                    borderColor: style === 'none' ? '#10b981' : '#333',
+                    color: style === 'none' ? '#10b981' : '#888',
+                    gridColumn: '1 / -1'  // 占满整行
+                  }}
+                >
+                  ⭕ 不选择风格
+                </button>
                 <button
                   onClick={() => setStyle('enhance')}
                   style={{
