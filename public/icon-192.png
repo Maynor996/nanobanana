@@ -1,0 +1,22 @@
+<!-- 这是一个占位符，实际部署时需要转换为PNG格式 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bananaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4aa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00a3ff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <circle cx="96" cy="96" r="90" fill="#0a0a0a" stroke="url(#aiGradient)" stroke-width="6"/>
+  <path d="M48 120 Q60 48 96 60 Q132 72 144 120 Q132 132 96 120 Q60 132 48 120 Z" 
+        fill="url(#bananaGradient)" stroke="#FFA500" stroke-width="3"/>
+  <ellipse cx="96" cy="60" rx="12" ry="6" fill="#8B4513"/>
+  <circle cx="72" cy="96" r="9" fill="#00d4aa" opacity="0.8"/>
+  <circle cx="120" cy="96" r="9" fill="#00a3ff" opacity="0.8"/>
+  <circle cx="96" cy="84" r="6" fill="#ffffff" opacity="0.6"/>
+</svg> 
