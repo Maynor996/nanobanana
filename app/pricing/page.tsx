@@ -193,14 +193,14 @@ export default function PricingPage() {
                 </div>
               )}
 
-              {plan.savings && (
+              {'savings' in plan && plan.savings && (
                 <div style={{
                   color: '#10b981',
                   fontSize: '0.9rem',
                   fontWeight: 'bold',
                   marginTop: '0.5rem'
                 }}>
-                  {plan.savings}
+                  💰 {plan.savings}
                 </div>
               )}
             </div>

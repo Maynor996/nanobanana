@@ -1,53 +1,47 @@
 'use client'
-
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const paymentIntentId = searchParams.get('payment_intent')
   const [paymentDetails, setPaymentDetails] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 获取支付详情 (可选)
-    const fetchPaymentDetails = async () => {
-      if (paymentIntentId) {
-        try {
-          // 这里可以调用API获取支付详情
-          // const response = await fetch(`/api/stripe/payment-details?id=${paymentIntentId}`)
-          // const data = await response.json()
-          // setPaymentDetails(data)
-          
-          // 暂时使用模拟数据
-          setPaymentDetails({
-            planName: '专业版',
-            credits: 500,
-            amount: '$23.99'
-          })
-        } catch (error) {
-          console.error('获取支付详情失败:', error)
-        }
-      }
+    // 模拟获取支付详情
+    setTimeout(() => {
+      setPaymentDetails({
+        id: paymentIntentId || 'pi_mock_123',
+        amount: 5599,
+        currency: 'usd',
+        plan: '无限年付版',
+        credits: '无限',
+        customerEmail: 'test@example.com'
+      })
       setLoading(false)
-    }
-
-    fetchPaymentDetails()
+    }, 1000)
   }, [paymentIntentId])
 
   if (loading) {
     return (
       <div style={{
         minHeight: '100vh',
-        backgroundColor: '#0a0a0a',
-        color: '#ffffff',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚙️</div>
-          <p>正在确认支付...</p>
+        <div style={{
+          textAlign: 'center',
+          color: 'white'
+        }}>
+          <div style={{
+            fontSize: '3rem',
+            marginBottom: '1rem',
+            animation: 'spin 2s linear infinite'
+          }}>⏳</div>
+          <h2>正在验证支付结果...</h2>
         </div>
       </div>
     )
@@ -56,193 +50,159 @@ export default function PaymentSuccessPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#0a0a0a',
-      color: '#ffffff',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: '2rem',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }}>
-      {/* Header */}
-      <header style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '1rem 2rem',
-        borderBottom: '1px solid #1a1a1a'
-      }}>
-        <h1 style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: 'bold',
-          color: '#10b981',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
-          🍌 Nano Banana
-        </h1>
-      </header>
-
-      {/* Success Content */}
       <div style={{
+        backgroundColor: 'white',
+        borderRadius: '1rem',
+        padding: '3rem',
         maxWidth: '600px',
-        margin: '4rem auto',
-        padding: '0 2rem',
-        textAlign: 'center'
+        width: '100%',
+        textAlign: 'center',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
       }}>
-        {/* Success Icon */}
+        {/* 成功图标 */}
         <div style={{
-          width: '120px',
-          height: '120px',
-          backgroundColor: '#10b981',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 2rem',
-          fontSize: '3rem'
+          fontSize: '4rem',
+          marginBottom: '1.5rem',
+          animation: 'bounce 1s ease-in-out'
         }}>
-          ✅
+          🎉
         </div>
 
-        {/* Success Message */}
+        {/* 成功标题 */}
         <h1 style={{
-          fontSize: '2.5rem',
+          color: '#10b981',
+          fontSize: '2rem',
           fontWeight: 'bold',
-          marginBottom: '1rem',
-          background: 'linear-gradient(135deg, #10b981, #059669)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
+          marginBottom: '1rem'
         }}>
           支付成功！
         </h1>
 
         <p style={{
-          fontSize: '1.2rem',
-          color: '#888',
+          color: '#666',
+          fontSize: '1.1rem',
           marginBottom: '2rem'
         }}>
-          感谢你的购买！你的AI积分已经到账，现在可以开始创作了。
+          恭喜！你已成功购买 Nano Banana AI 图像生成服务
         </p>
 
-        {/* Payment Details */}
-        {paymentDetails && (
-          <div style={{
-            backgroundColor: '#111111',
-            padding: '2rem',
-            borderRadius: '1rem',
-            border: '1px solid #333',
-            marginBottom: '2rem'
-          }}>
-            <h3 style={{ 
-              color: '#10b981', 
-              marginBottom: '1.5rem',
-              fontSize: '1.3rem'
-            }}>
-              📋 购买详情
-            </h3>
-            
-            <div style={{ display: 'grid', gap: '1rem', textAlign: 'left' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#888' }}>套餐:</span>
-                <span style={{ fontWeight: 'bold' }}>{paymentDetails.planName}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#888' }}>积分:</span>
-                <span style={{ color: '#10b981', fontWeight: 'bold' }}>
-                  💎 {paymentDetails.credits} 积分
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#888' }}>支付金额:</span>
-                <span style={{ fontWeight: 'bold' }}>{paymentDetails.amount}</span>
-              </div>
-              {paymentIntentId && (
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#888' }}>交易ID:</span>
-                  <span style={{ 
-                    fontFamily: 'monospace', 
-                    fontSize: '0.9rem',
-                    color: '#666'
-                  }}>
-                    {paymentIntentId.substring(0, 20)}...
-                  </span>
-                </div>
-              )}
-            </div>
+        {/* 支付详情 */}
+        <div style={{
+          backgroundColor: '#f8fafc',
+          borderRadius: '0.5rem',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          textAlign: 'left'
+        }}>
+          <h3 style={{ color: '#333', marginBottom: '1rem' }}>📋 购买详情</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ color: '#666' }}>套餐:</span>
+            <span style={{ fontWeight: 'bold', color: '#333' }}>{paymentDetails.plan}</span>
           </div>
-        )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ color: '#666' }}>AI积分:</span>
+            <span style={{ fontWeight: 'bold', color: '#10b981' }}>{paymentDetails.credits}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ color: '#666' }}>支付金额:</span>
+            <span style={{ fontWeight: 'bold', color: '#333' }}>
+              ${(paymentDetails.amount / 100).toFixed(2)} USD
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ color: '#666' }}>邮箱:</span>
+            <span style={{ color: '#333' }}>{paymentDetails.customerEmail}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: '#666' }}>订单号:</span>
+            <span style={{ color: '#333', fontSize: '0.9rem' }}>{paymentDetails.id}</span>
+          </div>
+        </div>
 
-        {/* Action Buttons */}
+        {/* 操作按钮 */}
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
           <button
             onClick={() => window.location.href = '/nano'}
             style={{
-              padding: '1rem 2rem',
               backgroundColor: '#10b981',
               color: 'white',
               border: 'none',
-              borderRadius: '0.75rem',
-              fontSize: '1rem',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
               fontWeight: 'bold',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#059669'
-              e.currentTarget.style.transform = 'translateY(-2px)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#10b981'
-              e.currentTarget.style.transform = 'none'
+              fontSize: '1rem'
             }}
           >
-            🎨 开始创作
+            🚀 开始使用
           </button>
-
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.href = '/pricing'}
             style={{
-              padding: '1rem 2rem',
               backgroundColor: 'transparent',
-              color: '#888',
-              border: '1px solid #333',
-              borderRadius: '0.75rem',
-              fontSize: '1rem',
+              color: '#10b981',
+              border: '2px solid #10b981',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '0.5rem',
               cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#10b981'
-              e.currentTarget.style.color = '#10b981'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#333'
-              e.currentTarget.style.color = '#888'
+              fontWeight: 'bold',
+              fontSize: '1rem'
             }}
           >
-            🏠 返回首页
+            📊 查看套餐
           </button>
         </div>
 
-        {/* Receipt Info */}
+        {/* 感谢信息 */}
         <div style={{
-          marginTop: '3rem',
-          padding: '1.5rem',
-          backgroundColor: '#1a1a1a',
+          marginTop: '2rem',
+          padding: '1rem',
+          backgroundColor: '#eff6ff',
           borderRadius: '0.5rem',
-          fontSize: '0.9rem',
-          color: '#666'
+          color: '#1e40af'
         }}>
-          <p style={{ marginBottom: '0.5rem' }}>
-            📧 支付收据已发送到你的邮箱
-          </p>
-          <p>
-            💡 如有任何问题，请联系客服或查看帮助文档
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            🎁 感谢选择 Nano Banana！你的支持让我们能够持续改进AI图像生成技术。
           </p>
         </div>
+
+        <style jsx>{`
+          @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+          }
+        `}</style>
       </div>
     </div>
   )
-} 
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center', color: 'white' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <h2>加载中...</h2>
+        </div>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
+  )
+}
+
+ 
