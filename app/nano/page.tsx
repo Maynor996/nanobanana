@@ -829,6 +829,231 @@ export default function NanoPage() {
           )}
         </div>
       )}
+      
+      {/* 使用示例部分 */}
+      <div style={{
+        marginTop: '4rem',
+        padding: '2rem',
+        backgroundColor: '#0a0a0a',
+        borderRadius: '1.5rem',
+        border: '1px solid #222'
+      }}>
+        <h2 style={{
+          fontSize: '1.8rem',
+          fontWeight: 'bold',
+          marginBottom: '2rem',
+          textAlign: 'center',
+          background: 'linear-gradient(135deg, #00d4aa, #00a3ff)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          🎨 使用示例
+        </h2>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          {/* 文生图示例 */}
+          <div style={{
+            backgroundColor: '#111',
+            padding: '1.5rem',
+            borderRadius: '1rem',
+            border: '1px solid #333'
+          }}>
+            <h3 style={{
+              color: '#00d4aa',
+              fontSize: '1.2rem',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              ✨ 文生图示例
+            </h3>
+            <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ color: '#888' }}>提示词：</strong>
+              <p style={{ 
+                color: '#ccc', 
+                fontFamily: 'monospace',
+                backgroundColor: '#222',
+                padding: '0.5rem',
+                borderRadius: '0.5rem',
+                margin: '0.5rem 0'
+              }}>
+                "一只可爱的橘猫坐在窗台上，阳光透过窗户洒在它身上，温暖的午后时光"
+              </p>
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ color: '#888' }}>风格：</strong>
+              <span style={{ color: '#00d4aa', marginLeft: '0.5rem' }}>写实照片</span>
+            </div>
+            <div>
+              <strong style={{ color: '#888' }}>生成数量：</strong>
+              <span style={{ color: '#00d4aa', marginLeft: '0.5rem' }}>2张</span>
+            </div>
+          </div>
+
+          {/* 图片编辑示例 */}
+          <div style={{
+            backgroundColor: '#111',
+            padding: '1.5rem',
+            borderRadius: '1rem',
+            border: '1px solid #333'
+          }}>
+            <h3 style={{
+              color: '#00a3ff',
+              fontSize: '1.2rem',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              🖼️ 图片编辑示例
+            </h3>
+            <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ color: '#888' }}>操作：</strong>
+              <p style={{ color: '#ccc', margin: '0.5rem 0' }}>
+                1. 上传一张人物照片
+              </p>
+              <p style={{ 
+                color: '#ccc', 
+                fontFamily: 'monospace',
+                backgroundColor: '#222',
+                padding: '0.5rem',
+                borderRadius: '0.5rem',
+                margin: '0.5rem 0'
+              }}>
+                2. 输入："把背景换成星空，添加魔法光效"
+              </p>
+            </div>
+            <div>
+              <strong style={{ color: '#888' }}>风格：</strong>
+              <span style={{ color: '#00a3ff', marginLeft: '0.5rem' }}>艺术风格</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 提示词技巧 */}
+        <div style={{
+          backgroundColor: '#111',
+          padding: '1.5rem',
+          borderRadius: '1rem',
+          border: '1px solid #333',
+          marginBottom: '2rem'
+        }}>
+          <h3 style={{
+            color: '#ffa500',
+            fontSize: '1.2rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            💡 提示词技巧
+          </h3>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '1rem'
+          }}>
+            <div>
+              <strong style={{ color: '#ffa500' }}>✅ 好的提示词：</strong>
+              <ul style={{ color: '#ccc', marginTop: '0.5rem', paddingLeft: '1rem' }}>
+                <li>描述具体细节：颜色、光线、构图</li>
+                <li>指定风格：写实、动漫、油画等</li>
+                <li>添加情感：温暖、神秘、活力等</li>
+                <li>描述环境：室内、户外、特定场景</li>
+              </ul>
+            </div>
+            <div>
+              <strong style={{ color: '#ff6b6b' }}>❌ 避免：</strong>
+              <ul style={{ color: '#ccc', marginTop: '0.5rem', paddingLeft: '1rem' }}>
+                <li>过于简单："猫"</li>
+                <li>过于复杂：超长描述</li>
+                <li>模糊概念：没有具体描述</li>
+                <li>敏感内容：违规或不当内容</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* 常用提示词模板 */}
+        <div style={{
+          backgroundColor: '#111',
+          padding: '1.5rem',
+          borderRadius: '1rem',
+          border: '1px solid #333'
+        }}>
+          <h3 style={{
+            color: '#9d4edd',
+            fontSize: '1.2rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            📝 常用提示词模板
+          </h3>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1rem'
+          }}>
+            <div style={{ padding: '1rem', backgroundColor: '#222', borderRadius: '0.5rem' }}>
+              <strong style={{ color: '#9d4edd' }}>🏞️ 风景类：</strong>
+              <p style={{ 
+                color: '#ccc', 
+                fontFamily: 'monospace',
+                fontSize: '0.9rem',
+                marginTop: '0.5rem',
+                lineHeight: '1.4'
+              }}>
+                "壮丽的山脉日出，金色阳光穿透云层，前景有清澈的湖水倒影，4K超高清"
+              </p>
+            </div>
+            <div style={{ padding: '1rem', backgroundColor: '#222', borderRadius: '0.5rem' }}>
+              <strong style={{ color: '#9d4edd' }}>👤 人像类：</strong>
+              <p style={{ 
+                color: '#ccc', 
+                fontFamily: 'monospace',
+                fontSize: '0.9rem',
+                marginTop: '0.5rem',
+                lineHeight: '1.4'
+              }}>
+                "专业商务女性肖像，自然光线，现代办公室背景，专业摄影，高清细节"
+              </p>
+            </div>
+            <div style={{ padding: '1rem', backgroundColor: '#222', borderRadius: '0.5rem' }}>
+              <strong style={{ color: '#9d4edd' }}>🎨 艺术类：</strong>
+              <p style={{ 
+                color: '#ccc', 
+                fontFamily: 'monospace',
+                fontSize: '0.9rem',
+                marginTop: '0.5rem',
+                lineHeight: '1.4'
+              }}>
+                "抽象几何艺术，鲜艳色彩搭配，现代艺术风格，高对比度，创意构图"
+              </p>
+            </div>
+            <div style={{ padding: '1rem', backgroundColor: '#222', borderRadius: '0.5rem' }}>
+              <strong style={{ color: '#9d4edd' }}>🚀 科幻类：</strong>
+              <p style={{ 
+                color: '#ccc', 
+                fontFamily: 'monospace',
+                fontSize: '0.9rem',
+                marginTop: '0.5rem',
+                lineHeight: '1.4'
+              }}>
+                "未来城市天际线，霓虹灯光，飞行汽车，赛博朋克风格，夜景，高科技感"
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
