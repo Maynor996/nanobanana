@@ -5,8 +5,8 @@ export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, imageData } = await request.json()
-    
+    const { prompt, imageData, imageDataArray } = await request.json()
+
     if (!prompt) {
       return NextResponse.json({ error: '请提供描述' }, { status: 400 })
     }
@@ -22,8 +22,20 @@ export async function POST(request: NextRequest) {
     // 构建请求内容 - 根据maynor API文档格式
     const parts: any[] = []
 
-    if (imageData) {
-      // 图片编辑模式
+    // 处理多图片输入
+    if (imageDataArray && Array.isArray(imageDataArray) && imageDataArray.length > 0) {
+      // 多图片模式
+      parts.push({ text: prompt })
+      imageDataArray.forEach((base64Data) => {
+        parts.push({
+          inline_data: {
+            mime_type: "image/jpeg",
+            data: base64Data
+          }
+        })
+      })
+    } else if (imageData) {
+      // 单图片模式（向后兼容）
       parts.push({ text: prompt })
       parts.push({
         inline_data: {

@@ -9,8 +9,8 @@ type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
 export default function NanoPage() {
   const [mode, setMode] = useState<Mode>('text')
   const [prompt, setPrompt] = useState('')
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState('')
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [style, setStyle] = useState<Style>('none')
   const [imageCount, setImageCount] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -29,14 +29,24 @@ export default function NanoPage() {
   ]
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      // 检查是否超过最大限制（最多10张图片）
+      const totalFiles = [...imageFiles, ...files]
+      if (totalFiles.length > 10) {
+        alert('最多只能上传10张图片')
+        return
       }
-      reader.readAsDataURL(file)
+
+      setImageFiles(prev => [...prev, ...files])
+
+      files.forEach(file => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setImagePreviews(prev => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
     }
   }
 
@@ -58,20 +68,27 @@ export default function NanoPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
-    const files = e.dataTransfer.files
-    if (files && files[0]) {
-      const file = files[0]
-      if (file.type.startsWith('image/')) {
-        setImageFile(file)
+
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'))
+    if (files.length > 0) {
+      // 检查是否超过最大限制（最多10张图片）
+      const totalFiles = [...imageFiles, ...files]
+      if (totalFiles.length > 10) {
+        alert('最多只能上传10张图片')
+        return
+      }
+
+      setImageFiles(prev => [...prev, ...files])
+
+      files.forEach(file => {
         const reader = new FileReader()
         reader.onloadend = () => {
-          setImagePreview(reader.result as string)
+          setImagePreviews(prev => [...prev, reader.result as string])
         }
         reader.readAsDataURL(file)
-      } else {
-        alert('请上传图片文件')
-      }
+      })
+    } else {
+      alert('请上传图片文件')
     }
   }
 
@@ -111,11 +128,11 @@ export default function NanoPage() {
     // Compress large images first
     const maxSizeMB = 2
     let processedFile = file
-    
+
     if (file.size > maxSizeMB * 1024 * 1024) {
       processedFile = await compressImage(file)
     }
-    
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.readAsDataURL(processedFile)
@@ -128,12 +145,17 @@ export default function NanoPage() {
     })
   }
 
+  const convertMultipleToBase64 = async (files: File[]): Promise<string[]> => {
+    const promises = files.map(file => convertToBase64(file))
+    return Promise.all(promises)
+  }
+
   const handleGenerate = async () => {
     if (mode === 'text' && prompt.length < 3) {
       alert('请输入至少3个字符的描述')
       return
     }
-    if (mode === 'upload' && !imageFile) {
+    if (mode === 'upload' && imageFiles.length === 0) {
       alert('请先上传图片')
       return
     }
@@ -142,25 +164,26 @@ export default function NanoPage() {
     setResult(null)
 
     try {
-      let imageData = null
+      let imageDataArray = null
       let finalPrompt = prompt
 
-      if (mode === 'upload' && imageFile) {
-        imageData = await convertToBase64(imageFile)
+      if (mode === 'upload' && imageFiles.length > 0) {
+        imageDataArray = await convertMultipleToBase64(imageFiles)
         const stylePrompt = getStylePrompt(style)
-        finalPrompt = stylePrompt ? `${stylePrompt} ${prompt || '优化这张图片'}` : (prompt || '优化这张图片')
+        const imageCountText = imageFiles.length > 1 ? `基于${imageFiles.length}张图片` : '基于上传的图片'
+        finalPrompt = stylePrompt ? `${stylePrompt} ${imageCountText} ${prompt || '优化这些图片'}` : (prompt || '优化这些图片')
       } else {
         // 文生图模式不需要图片数据
-        imageData = null
+        imageDataArray = null
         const stylePrompt = getStylePrompt(style)
         finalPrompt = stylePrompt ? `${stylePrompt} ${prompt}` : prompt
       }
 
       const apiEndpoint = mode === 'text' ? '/api/generate' : '/api/gemini'
-      const requestBody = mode === 'text' 
+      const requestBody = mode === 'text'
         ? { prompt: finalPrompt }
-        : { prompt: finalPrompt, imageData }
-      
+        : { prompt: finalPrompt, imageDataArray }
+
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -341,7 +364,7 @@ export default function NanoPage() {
         {/* Left Panel */}
         <div style={{ flex: 1 }}>
           {mode === 'upload' ? (
-            <div 
+            <div
               onDragOver={handleDragOver}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
@@ -350,64 +373,150 @@ export default function NanoPage() {
                 background: 'linear-gradient(135deg, #111111, #1a1a1a)',
                 border: '2px dashed rgba(16, 185, 129, 0.3)',
                 borderRadius: '1.5rem',
-                padding: '4rem 2rem',
+                padding: '2rem',
                 textAlign: 'center',
                 minHeight: '400px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
                 boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
                 transition: 'all 0.3s ease',
                 cursor: 'pointer'
               }}
               onClick={() => {
-                if (!imagePreview) {
+                if (imagePreviews.length === 0) {
                   document.getElementById('file-upload')?.click()
                 }
               }}
             >
-              {imagePreview ? (
+              {imagePreviews.length > 0 ? (
                 <div>
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
-                    style={{ 
-                      maxWidth: '100%', 
-                      maxHeight: '300px',
-                      borderRadius: '0.5rem',
-                      marginBottom: '1rem'
-                    }}
-                  />
-                  <button
-                    onClick={() => {
-                      setImageFile(null)
-                      setImagePreview('')
-                    }}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.5rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    删除图片
-                  </button>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: imagePreviews.length === 1 ? '1fr' : imagePreviews.length === 2 ? '1fr 1fr' : 'repeat(auto-fit, minmax(150px, 1fr))',
+                    gap: '1rem',
+                    marginBottom: '1rem',
+                    maxHeight: '300px',
+                    overflowY: 'auto'
+                  }}>
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} style={{ position: 'relative' }}>
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          style={{
+                            width: '100%',
+                            height: '120px',
+                            objectFit: 'cover',
+                            borderRadius: '0.5rem',
+                            border: '2px solid #10b981'
+                          }}
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const newFiles = imageFiles.filter((_, i) => i !== index)
+                            const newPreviews = imagePreviews.filter((_, i) => i !== index)
+                            setImageFiles(newFiles)
+                            setImagePreviews(newPreviews)
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: '-5px',
+                            right: '-5px',
+                            width: '24px',
+                            height: '24px',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          ×
+                        </button>
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '5px',
+                          left: '5px',
+                          backgroundColor: 'rgba(0,0,0,0.7)',
+                          color: 'white',
+                          padding: '2px 6px',
+                          borderRadius: '0.25rem',
+                          fontSize: '12px'
+                        }}>
+                          {index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                      id="file-upload"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      style={{
+                        padding: '0.5rem 1rem',
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        color: 'white',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        display: 'inline-block',
+                        boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)',
+                        transition: 'all 0.3s ease',
+                        fontSize: '0.9rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                        e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.4)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'none'
+                        e.currentTarget.style.boxShadow = '0 2px 10px rgba(16, 185, 129, 0.3)'
+                      }}
+                    >
+                      ➕ 添加更多图片
+                    </label>
+                    <button
+                      onClick={() => {
+                        setImageFiles([])
+                        setImagePreviews([])
+                      }}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      🗑️ 清空全部
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
                   <div style={{ fontSize: '3rem', color: '#10b981', marginBottom: '1rem' }}>📸</div>
                   <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#10b981' }}>拖拽图片到此处或点击上传</h3>
                   <p style={{ color: '#888', marginBottom: '1rem', lineHeight: '1.5' }}>
-                    💡 支持 PNG, JPG, JPEG, WebP, GIF 格式<br />
+                    💡 支持多图上传，最多10张<br />
                     📏 单个文件最大 10MB<br />
-                    🎨 上传后可通过对话描述编辑需求
+                    🎨 支持 PNG, JPG, JPEG, WebP, GIF 格式<br />
+                    🔄 上传后可通过对话描述编辑需求
                   </p>
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageUpload}
                     style={{ display: 'none' }}
                     id="file-upload"
@@ -575,12 +684,15 @@ export default function NanoPage() {
               boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)',
               border: '1px solid rgba(16, 185, 129, 0.1)'
             }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>🎨 对话式图像编辑</h3>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>🎨 多图智能编辑</h3>
               <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                上传多张参考图（最多10张），通过自然对话描述编辑需求，AI 智能理解并精准执行。
+                ✨ 支持上传最多10张图片作为参考<br />
+                🎯 通过自然对话描述编辑需求<br />
+                🚀 AI智能理解并合成创意内容<br />
+                📸 可进行风格迁移、合成创作等多种操作
               </p>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button 
+                <button
                   style={{ ...tagStyle }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#10b981'
@@ -594,8 +706,8 @@ export default function NanoPage() {
                     e.currentTarget.style.backgroundColor = 'transparent'
                     e.currentTarget.style.transform = 'none'
                   }}
-                >✨ 对话编辑</button>
-                <button 
+                >✨ 多图编辑</button>
+                <button
                   style={{ ...tagStyle }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#10b981'
@@ -609,8 +721,8 @@ export default function NanoPage() {
                     e.currentTarget.style.backgroundColor = 'transparent'
                     e.currentTarget.style.transform = 'none'
                   }}
-                >🎯 多图参考</button>
-                <button 
+                >🎨 风格迁移</button>
+                <button
                   style={{ ...tagStyle }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#10b981'
@@ -624,7 +736,22 @@ export default function NanoPage() {
                     e.currentTarget.style.backgroundColor = 'transparent'
                     e.currentTarget.style.transform = 'none'
                   }}
-                >🚀 智能理解</button>
+                >🖼️ 图片合成</button>
+                <button
+                  style={{ ...tagStyle }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#10b981'
+                    e.currentTarget.style.color = '#10b981'
+                    e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.05)'
+                    e.currentTarget.style.transform = 'translateY(-1px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#333'
+                    e.currentTarget.style.color = '#888'
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.transform = 'none'
+                  }}
+                >🚀 AI增强</button>
               </div>
             </div>
           )}
@@ -846,7 +973,7 @@ export default function NanoPage() {
 
       {/* Result Display */}
       {result && (
-        <div style={{ 
+        <div style={{
           padding: '2rem',
           maxWidth: '1400px',
           margin: '0 auto'
@@ -856,10 +983,11 @@ export default function NanoPage() {
           </h3>
           {(result.imageData || result.imageUrl) ? (
             <div style={{ textAlign: 'center' }}>
-              <img 
+              <img
+                id="generated-image"
                 src={result.imageUrl || `data:${result.mimeType};base64,${result.imageData}`}
                 alt="Generated"
-                style={{ 
+                style={{
                   maxWidth: '100%',
                   maxHeight: '600px',
                   borderRadius: '1.5rem',
@@ -875,6 +1003,150 @@ export default function NanoPage() {
                   e.currentTarget.style.boxShadow = '0 15px 50px rgba(0,0,0,0.6)'
                 }}
               />
+              <div style={{
+                marginTop: '1rem',
+                display: 'flex',
+                gap: '1rem',
+                justifyContent: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <button
+                  onClick={() => {
+                    const img = document.getElementById('generated-image') as HTMLImageElement
+                    if (img) {
+                      const canvas = document.createElement('canvas')
+                      const ctx = canvas.getContext('2d')
+                      canvas.width = img.naturalWidth
+                      canvas.height = img.naturalHeight
+                      ctx?.drawImage(img, 0, 0)
+
+                      canvas.toBlob((blob) => {
+                        if (blob) {
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = `gemini-generated-${Date.now()}.png`
+                          document.body.appendChild(a)
+                          a.click()
+                          document.body.removeChild(a)
+                          URL.revokeObjectURL(url)
+                        }
+                      }, 'image/png')
+                    }
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.4)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'none'
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)'
+                  }}
+                >
+                  💾 下载图片
+                </button>
+                <button
+                  onClick={() => {
+                    const img = document.getElementById('generated-image') as HTMLImageElement
+                    if (img && navigator.share) {
+                      fetch(img.src)
+                        .then(res => res.blob())
+                        .then(blob => {
+                          const file = new File([blob], 'gemini-generated.png', { type: 'image/png' })
+                          navigator.share({
+                            title: 'Gemini 生成的图片',
+                            text: '分享我的AI生成图片',
+                            files: [file]
+                          })
+                        })
+                        .catch(err => {
+                          console.error('分享失败:', err)
+                          // 如果分享失败，回退到复制链接
+                          navigator.clipboard.writeText(img.src)
+                          alert('图片链接已复制到剪贴板')
+                        })
+                    } else {
+                      // 复制图片URL到剪贴板
+                      navigator.clipboard.writeText(img.src)
+                      alert('图片链接已复制到剪贴板')
+                    }
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'none'
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3)'
+                  }}
+                >
+                  📤 分享图片
+                </button>
+                <button
+                  onClick={() => {
+                    const img = document.getElementById('generated-image') as HTMLImageElement
+                    if (img) {
+                      navigator.clipboard.writeText(img.src)
+                      alert('图片链接已复制到剪贴板！')
+                    }
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'none'
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)'
+                  }}
+                >
+                  🔗 复制链接
+                </button>
+              </div>
             </div>
           ) : (
             <div style={{
@@ -884,6 +1156,24 @@ export default function NanoPage() {
               textAlign: 'center'
             }}>
               <p style={{ fontSize: '1.1rem' }}>{result.text || result.content || result.message}</p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(result.text || result.content || result.message)
+                  alert('文本已复制到剪贴板！')
+                }}
+                style={{
+                  marginTop: '1rem',
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                📋 复制文本
+              </button>
             </div>
           )}
         </div>
