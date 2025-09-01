@@ -5,6 +5,244 @@
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  /* Header adjustments */
+  header {
+    padding: 1rem !important;
+  }
+
+  header nav {
+    display: none !important;
+  }
+
+  /* Mode selector adjustments */
+  .mode-selector {
+    padding: 1rem !important;
+  }
+
+  .mode-button {
+    flex: 1 !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  /* Main content adjustments */
+  .main-content {
+    padding: 0 1rem 2rem !important;
+    gap: 1rem !important;
+  }
+
+  .left-panel {
+    width: 100% !important;
+    order: 2 !important;
+  }
+
+  .right-panel {
+    width: 100% !important;
+    order: 1 !important;
+  }
+
+  /* Upload area adjustments */
+  .upload-area {
+    padding: 1.5rem 1rem !important;
+    min-height: 300px !important;
+  }
+
+  /* Image grid adjustments */
+  .image-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+    gap: 0.75rem !important;
+    max-height: 250px !important;
+  }
+
+  .image-preview {
+    height: 100px !important;
+  }
+
+  /* Button adjustments */
+  .action-buttons {
+    gap: 0.5rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .action-button {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Text input adjustments */
+  .text-input-area {
+    min-height: 300px !important;
+  }
+
+  textarea {
+    min-height: 150px !important;
+    padding: 0.75rem !important;
+    font-size: 1rem !important;
+  }
+
+  /* Quick prompts grid */
+  .quick-prompts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .quick-prompt-button {
+    padding: 0.4rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Style buttons adjustments */
+  .style-buttons {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .style-button {
+    padding: 0.6rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Generate button adjustments */
+  .generate-button {
+    padding: 0.8rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  /* Result display adjustments */
+  .result-section {
+    padding: 1rem !important;
+  }
+
+  .result-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .result-image {
+    height: 200px !important;
+  }
+
+  /* Examples section adjustments */
+  .examples-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .tips-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .templates-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Touch-friendly interactions */
+  button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  /* Improve touch targets */
+  .close-button {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 16px !important;
+  }
+
+  .image-number {
+    font-size: 10px !important;
+    padding: 1px 4px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens */
+  .mode-button {
+    padding: 0.6rem 0.8rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .upload-area {
+    padding: 1rem 0.75rem !important;
+  }
+
+  .style-button {
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .generate-button {
+    padding: 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Enhanced mobile touch interactions */
+  .upload-area:hover {
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    background: linear-gradient(135deg, #0f0f0f, #1a1a1a) !important;
+  }
+
+  .upload-area:active {
+    transform: scale(0.98) !important;
+    border-color: #10b981 !important;
+  }
+
+  /* Better mobile scrolling */
+  .image-grid {
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Improved mobile input experience */
+  input[type="file"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+
+  /* Mobile-specific button feedback */
+  .action-button:active,
+  .style-button:active,
+  .quick-prompt-button:active {
+    transform: scale(0.95) !important;
+    opacity: 0.8 !important;
+  }
+
+  /* Enhanced mobile text readability */
+  textarea {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+
+  /* Mobile-friendly hover states */
+  @media (hover: hover) and (pointer: fine) {
+    .upload-area:hover {
+      border-color: rgba(16, 185, 129, 0.4) !important;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a) !important;
+    }
+
+    .action-button:hover,
+    .style-button:hover,
+    .quick-prompt-button:hover {
+      transform: translateY(-1px) !important;
+    }
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .upload-area {
+    -webkit-user-select: none !important;
+    -webkit-touch-callout: none !important;
+  }
+
+  .image-preview {
+    -webkit-user-select: none !important;
+    -webkit-touch-callout: none !important;
+  }
+}
+
 /* Custom gradient backgrounds */
 .gradient-card {
   background: linear-gradient(135deg, #111111, #1a1a1a);

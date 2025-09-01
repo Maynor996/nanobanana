@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { withCreditsCheck } from '../../lib/credits-middleware'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-export async function POST(request: NextRequest) {
+async function geminiHandler(request: NextRequest, userEmail: string) {
   try {
     const { prompt, imageData, imageDataArray } = await request.json()
 
@@ -118,9 +119,13 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   } catch (error) {
     console.error('生成错误:', error)
-    return NextResponse.json({ 
-      error: '生成失败', 
-      details: error instanceof Error ? error.message : '未知错误' 
+    return NextResponse.json({
+      error: '生成失败',
+      details: error instanceof Error ? error.message : '未知错误'
     }, { status: 500 })
   }
+}
+
+export async function POST(request: NextRequest) {
+  return withCreditsCheck(request, geminiHandler)
 }

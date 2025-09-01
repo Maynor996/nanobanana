@@ -3,9 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
+    "dev:fast": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbo",
+    "dev:legacy": "next dev",
     "build": "next build",
-    "start": "next start"
+    "build:analyze": "cross-env ANALYZE=true next build",
+    "start": "next start",
+    "clean": "if exist .next rmdir /s /q .next && if exist out rmdir /s /q out && if exist node_modules\\.cache rmdir /s /q node_modules\\.cache",
+    "perf": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbo"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^3.9.2",
@@ -20,6 +25,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/stripe": "^8.0.0",
+    "cross-env": "^7.0.3",
     "typescript": "^5"
   }
 }

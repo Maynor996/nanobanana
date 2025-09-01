@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { withCreditsCheck } from '../../lib/credits-middleware'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-export async function POST(request: NextRequest) {
+async function generateHandler(request: NextRequest, userEmail: string) {
   try {
     const { prompt } = await request.json()
     
@@ -122,10 +123,14 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    return NextResponse.json({ 
-      error: errorMessage, 
+    return NextResponse.json({
+      error: errorMessage,
       details: errorDetails,
       timestamp: new Date().toISOString()
     }, { status: 500 })
   }
+}
+
+export async function POST(request: NextRequest) {
+  return withCreditsCheck(request, generateHandler)
 }

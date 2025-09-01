@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './nano.css'
+import AnonymousUser from '../components/AnonymousUser'
+import UserAuth from '../components/UserAuth'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
@@ -15,7 +17,12 @@ export default function NanoPage() {
   const [imageCount, setImageCount] = useState(1)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
-  const [credits] = useState(4)
+  const [userEmail, setUserEmail] = useState<string>('')
+  const [userCredits, setUserCredits] = useState<number>(0)
+  const [isUnlimited, setIsUnlimited] = useState(false)
+  const [sessionId, setSessionId] = useState<string>('')
+  const [isAnonymous, setIsAnonymous] = useState(true)
+  const [forceShowLogin, setForceShowLogin] = useState(false)
 
   const quickPrompts = [
     { icon: '🏔️', text: '风景', value: '美丽的自然风景' },
@@ -28,6 +35,45 @@ export default function NanoPage() {
     { icon: '💡', text: '创意', value: '创意设计' }
   ]
 
+  // 获取用户积分信息
+  const handleCreditsUpdate = (credits: number, unlimited: boolean) => {
+    setUserCredits(credits)
+    setIsUnlimited(unlimited)
+  }
+
+  // 处理会话就绪
+  const handleSessionReady = (sid: string) => {
+    setSessionId(sid)
+    // 会话就绪后立即检查用户状态
+    checkUserStatus()
+  }
+
+  // 检查用户状态和积分
+  const checkUserStatus = async () => {
+    if (isAnonymous && sessionId) {
+      try {
+        const response = await fetch(`/api/anonymous/credits?sessionId=${encodeURIComponent(sessionId)}`)
+        const data = await response.json()
+
+        if (response.ok && data.success) {
+          setUserCredits(Math.max(0, data.remainingFreeUses))
+          if (data.remainingFreeUses <= 0 && !localStorage.getItem('nano_user_email')) {
+            setForceShowLogin(true)
+          }
+        }
+      } catch (error) {
+        console.error('检查用户状态失败:', error)
+      }
+    }
+  }
+
+  // 处理用户认证成功
+  const handleUserAuth = (email: string) => {
+    setUserEmail(email)
+    setIsAnonymous(false)
+    setForceShowLogin(false) // 重置强制登录提示状态
+  }
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length > 0) {
@@ -35,6 +81,8 @@ export default function NanoPage() {
       const totalFiles = [...imageFiles, ...files]
       if (totalFiles.length > 10) {
         alert('最多只能上传10张图片')
+        // 重置input值以允许重新选择相同的文件
+        e.target.value = ''
         return
       }
 
@@ -48,6 +96,9 @@ export default function NanoPage() {
         reader.readAsDataURL(file)
       })
     }
+
+    // 重置input值以允许重新选择相同的文件
+    e.target.value = ''
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -151,12 +202,24 @@ export default function NanoPage() {
   }
 
   const handleGenerate = async () => {
+    if (!sessionId) {
+      alert('正在初始化，请稍候...')
+      return
+    }
+
     if (mode === 'text' && prompt.length < 3) {
       alert('请输入至少3个字符的描述')
       return
     }
     if (mode === 'upload' && imageFiles.length === 0) {
       alert('请先上传图片')
+      return
+    }
+
+    // 现在匿名用户可以无限使用，不需要检查积分
+    if (!isAnonymous && !isUnlimited && userCredits <= 0) {
+      alert('积分不足，请先购买套餐')
+      window.location.href = '/pricing'
       return
     }
 
@@ -184,18 +247,54 @@ export default function NanoPage() {
         ? { prompt: finalPrompt }
         : { prompt: finalPrompt, imageDataArray }
 
+      // 添加用户标识到请求
+      const requestData = {
+        ...requestBody,
+        count: imageCount
+      }
+
+      // 如果是注册用户，使用邮箱；如果是匿名用户，使用sessionId
+      if (!isAnonymous && userEmail) {
+        requestData.email = userEmail
+      } else if (isAnonymous && sessionId) {
+        requestData.sessionId = sessionId
+      }
+
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestData)
       })
 
       const data = await response.json()
 
       if (!response.ok) {
+        if (response.status === 402) {
+          if (data.loginRequired) {
+            // 匿名用户积分用完，更新积分显示为0并触发登录提示
+            setUserCredits(0)
+            setIsAnonymous(false) // 设置为非匿名用户以触发登录提示
+            setForceShowLogin(true) // 强制显示登录提示
+            alert(data.error || '您的免费试用次数已用完，请登录账号继续使用')
+            return
+          } else {
+            alert(data.error || '积分不足')
+            window.location.href = '/pricing'
+            return
+          }
+        } else if (response.status === 401) {
+          alert(data.error || '请先登录')
+          return
+        }
         alert(data.error || '生成失败')
+        return
       } else {
         setResult(data)
+        // 更新剩余积分（仅对注册用户）
+        if (data.remainingCredits !== undefined && !isAnonymous) {
+          setUserCredits(data.remainingCredits)
+        }
+        // 匿名用户现在无限使用，不需要更新积分显示
       }
     } catch (err) {
       alert('网络错误，请重试')
@@ -254,43 +353,28 @@ export default function NanoPage() {
           </nav>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <span>中文</span>
-          <button 
-            onClick={() => window.location.href = '/pricing'}
-            style={{
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              padding: '0.5rem 1.5rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer'
-            }}
-          >
-            获取 Nano Banana →
-          </button>
-          <button style={{
-            backgroundColor: 'transparent',
-            color: 'white',
-            border: '1px solid #333',
-            padding: '0.5rem 1rem',
-            borderRadius: '0.5rem',
-            cursor: 'pointer'
-          }}>
-            登录
-          </button>
+          {!userEmail ? (
+            <AnonymousUser onSessionReady={handleSessionReady} forceShowLogin={forceShowLogin} />
+          ) : (
+            <UserAuth
+              onAuth={handleUserAuth}
+              onCreditsUpdate={handleCreditsUpdate}
+            />
+          )}
         </div>
       </header>
 
       {/* Mode Selector */}
-      <div style={{ display: 'flex', gap: '1rem', padding: '2rem', justifyContent: 'center' }}>
+      <div className="mode-selector" style={{ display: 'flex', gap: '1rem', padding: '2rem', justifyContent: 'center' }}>
         <button
+          className="mode-button"
           onClick={() => setMode('upload')}
           style={{
             flex: 1,
             maxWidth: '400px',
             padding: '1rem 2rem',
-            background: mode === 'upload' 
-              ? 'linear-gradient(135deg, #10b981, #059669)' 
+            background: mode === 'upload'
+              ? 'linear-gradient(135deg, #10b981, #059669)'
               : 'transparent',
             border: mode === 'upload' ? 'none' : '1px solid #10b981',
             color: mode === 'upload' ? 'white' : '#10b981',
@@ -298,8 +382,8 @@ export default function NanoPage() {
             cursor: 'pointer',
             fontSize: '1rem',
             transition: 'all 0.3s ease',
-            boxShadow: mode === 'upload' 
-              ? '0 8px 25px rgba(16, 185, 129, 0.3)' 
+            boxShadow: mode === 'upload'
+              ? '0 8px 25px rgba(16, 185, 129, 0.3)'
               : 'none',
             transform: mode === 'upload' ? 'translateY(-2px)' : 'none'
           }}
@@ -321,13 +405,14 @@ export default function NanoPage() {
           📷 通过对话编辑图像
         </button>
         <button
+          className="mode-button"
           onClick={() => setMode('text')}
           style={{
             flex: 1,
             maxWidth: '400px',
             padding: '1rem 2rem',
-            background: mode === 'text' 
-              ? 'linear-gradient(135deg, #10b981, #059669)' 
+            background: mode === 'text'
+              ? 'linear-gradient(135deg, #10b981, #059669)'
               : 'transparent',
             border: mode === 'text' ? 'none' : '1px solid #10b981',
             color: mode === 'text' ? 'white' : '#10b981',
@@ -335,8 +420,8 @@ export default function NanoPage() {
             cursor: 'pointer',
             fontSize: '1rem',
             transition: 'all 0.3s ease',
-            boxShadow: mode === 'text' 
-              ? '0 8px 25px rgba(16, 185, 129, 0.3)' 
+            boxShadow: mode === 'text'
+              ? '0 8px 25px rgba(16, 185, 129, 0.3)'
               : 'none',
             transform: mode === 'text' ? 'translateY(-2px)' : 'none'
           }}
@@ -360,11 +445,12 @@ export default function NanoPage() {
       </div>
 
       {/* Main Content */}
-      <div style={{ display: 'flex', gap: '2rem', padding: '0 2rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
+      <div className="main-content" style={{ display: 'flex', gap: '2rem', padding: '0 2rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Left Panel */}
-        <div style={{ flex: 1 }}>
+        <div className="left-panel" style={{ flex: 1 }}>
           {mode === 'upload' ? (
             <div
+              className="upload-area"
               onDragOver={handleDragOver}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
@@ -388,7 +474,7 @@ export default function NanoPage() {
             >
               {imagePreviews.length > 0 ? (
                 <div>
-                  <div style={{
+                  <div className="image-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: imagePreviews.length === 1 ? '1fr' : imagePreviews.length === 2 ? '1fr 1fr' : 'repeat(auto-fit, minmax(150px, 1fr))',
                     gap: '1rem',
@@ -399,6 +485,7 @@ export default function NanoPage() {
                     {imagePreviews.map((preview, index) => (
                       <div key={index} style={{ position: 'relative' }}>
                         <img
+                          className="image-preview"
                           src={preview}
                           alt={`Preview ${index + 1}`}
                           style={{
@@ -410,6 +497,7 @@ export default function NanoPage() {
                           }}
                         />
                         <button
+                          className="close-button"
                           onClick={(e) => {
                             e.stopPropagation()
                             const newFiles = imageFiles.filter((_, i) => i !== index)
@@ -436,7 +524,7 @@ export default function NanoPage() {
                         >
                           ×
                         </button>
-                        <div style={{
+                        <div className="image-number" style={{
                           position: 'absolute',
                           bottom: '5px',
                           left: '5px',
@@ -451,7 +539,7 @@ export default function NanoPage() {
                       </div>
                     ))}
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <div className="action-buttons" style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <input
                       type="file"
                       accept="image/*"
@@ -461,6 +549,7 @@ export default function NanoPage() {
                       id="file-upload"
                     />
                     <label
+                      className="action-button"
                       htmlFor="file-upload"
                       style={{
                         padding: '0.5rem 1rem',
@@ -485,6 +574,7 @@ export default function NanoPage() {
                       ➕ 添加更多图片
                     </label>
                     <button
+                      className="action-button"
                       onClick={() => {
                         setImageFiles([])
                         setImagePreviews([])
@@ -571,9 +661,10 @@ export default function NanoPage() {
                 <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
                   点击下方标签快速开始创作
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="quick-prompts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   {quickPrompts.map((item, index) => (
                     <button
+                      className="quick-prompt-button"
                       key={index}
                       onClick={() => setPrompt(item.value)}
                       style={{
@@ -615,7 +706,7 @@ export default function NanoPage() {
 
               {/* Text Input Area */}
               <div style={{ flex: 1 }}>
-                <div style={{
+                <div className="text-input-area" style={{
                   background: 'linear-gradient(135deg, #111111, #1a1a1a)',
                   borderRadius: '1.5rem',
                   padding: '1.5rem',
@@ -758,7 +849,7 @@ export default function NanoPage() {
         </div>
 
         {/* Right Panel - AI Options */}
-        <div style={{ width: '350px' }}>
+        <div className="right-panel" style={{ width: '350px' }}>
           <div style={{
             background: 'linear-gradient(135deg, #111111, #1a1a1a)',
             borderRadius: '1.5rem',
@@ -779,8 +870,9 @@ export default function NanoPage() {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <h4 style={{ fontSize: '0.9rem', marginBottom: '1rem', color: '#888' }}>快速风格</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="style-buttons" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <button
+                  className="style-button"
                   onClick={() => setStyle(style === 'enhance' ? 'none' : 'enhance')}
                   style={{
                     ...styleButtonStyle,
@@ -792,6 +884,7 @@ export default function NanoPage() {
                   🔍 增强细节
                 </button>
                 <button
+                  className="style-button"
                   onClick={() => setStyle(style === 'artistic' ? 'none' : 'artistic')}
                   style={{
                     ...styleButtonStyle,
@@ -803,6 +896,7 @@ export default function NanoPage() {
                   🎨 艺术风格
                 </button>
                 <button
+                  className="style-button"
                   onClick={() => setStyle(style === 'anime' ? 'none' : 'anime')}
                   style={{
                     ...styleButtonStyle,
@@ -814,6 +908,7 @@ export default function NanoPage() {
                   ✨ 动漫风格
                 </button>
                 <button
+                  className="style-button"
                   onClick={() => setStyle(style === 'photo' ? 'none' : 'photo')}
                   style={{
                     ...styleButtonStyle,
@@ -864,12 +959,45 @@ export default function NanoPage() {
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <span style={{ fontSize: '0.9rem', color: '#888' }}>🎯 生成数量</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9rem', color: '#10b981' }}>{imageCount} 张</span>
+                  {userEmail && (
+                    <span style={{
+                      fontSize: '0.7rem',
+                      padding: '0.2rem 0.4rem',
+                      borderRadius: '0.3rem',
+                      backgroundColor: isUnlimited ? '#10b981' : 'pro' ? '#8b5cf6' : '#6b7280',
+                      color: 'white'
+                    }}>
+                      {isUnlimited ? '无限版' : '专业版'}
+                    </span>
+                  )}
               </div>
+              </div>
+
+              {/* 免费用户提示 */}
+              {!userEmail && (
+                <div style={{
+                  backgroundColor: '#0f2419',
+                  border: '1px solid #10b981',
+                  borderRadius: '0.5rem',
+                  padding: '0.75rem',
+                  marginBottom: '1rem',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                    🔓 免费体验
+                  </div>
+                  <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '0' }}>
+                    登录后可免费试用 3 次，付费用户可生成多张图片
+                  </p>
+                </div>
+              )}
+
               <input
                 type="range"
                 min="1"
-                max="4"
+                max={(!isAnonymous && userEmail) ? (isUnlimited ? 10 : 4) : 1}
                 value={imageCount}
                 onChange={(e) => setImageCount(Number(e.target.value))}
                 style={{
@@ -883,6 +1011,7 @@ export default function NanoPage() {
                 }}
                 className="custom-slider"
               />
+
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
@@ -891,24 +1020,55 @@ export default function NanoPage() {
                 color: '#666'
               }}>
                 <span>1 张</span>
+                {(!isAnonymous && userEmail) && (
+                  <>
                 <span>2 张</span>
                 <span>3 张</span>
-                <span>4 张</span>
+                    <span>{isUnlimited ? 10 : 4} 张</span>
+                  </>
+                )}
               </div>
+
+              {userEmail && imageCount > 1 && (
+                <div style={{
+                  backgroundColor: '#1a1a2e',
+                  border: '1px solid #8b5cf6',
+                  borderRadius: '0.5rem',
+                  padding: '0.75rem',
+                  marginTop: '0.5rem'
+                }}>
+                  <div style={{
+                    color: '#8b5cf6',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    marginBottom: '0.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <span>⭐</span>
+                    高级功能已启用
+                  </div>
+                  <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '0' }}>
+                    使用专业级AI引擎生成 {imageCount} 张多样化图片
+                  </p>
+                </div>
+              )}
+
               <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
                 💡 提示：描述越详细，生成的图像越接近你的想象
               </p>
             </div>
 
             <button
+              className={`generate-button ${loading ? 'loading' : 'button-glow'}`}
               onClick={handleGenerate}
-              disabled={loading}
-              className={loading ? 'loading' : 'button-glow'}
+              disabled={loading || !sessionId}
               style={{
                 width: '100%',
                 padding: '1rem',
-                background: loading 
-                  ? 'linear-gradient(135deg, #6b7280, #4b5563)' 
+                background: loading
+                  ? 'linear-gradient(135deg, #6b7280, #4b5563)'
                   : 'linear-gradient(135deg, #10b981, #059669)',
                 color: 'white',
                 border: 'none',
@@ -922,8 +1082,8 @@ export default function NanoPage() {
                 justifyContent: 'center',
                 gap: '0.5rem',
                 transition: 'all 0.3s ease',
-                boxShadow: loading 
-                  ? 'none' 
+                boxShadow: loading
+                  ? 'none'
                   : '0 8px 25px rgba(16, 185, 129, 0.3)',
                 transform: loading ? 'none' : 'none'
               }}
@@ -946,14 +1106,14 @@ export default function NanoPage() {
                 </>
               ) : (
                 <>
-                  🎨 开始生成 ({imageCount} 张)
-                  <span style={{ 
-                    backgroundColor: 'rgba(255,255,255,0.2)', 
+                                    🎨 {isAnonymous ? '免费生成' : '开始生成'} ({imageCount} 张)
+                  <span style={{
+                    backgroundColor: 'rgba(255,255,255,0.2)',
                     padding: '0.25rem 0.5rem',
                     borderRadius: '0.25rem',
                     fontSize: '0.9rem'
                   }}>
-                    💎 {credits} 积分
+                    💎 {isUnlimited ? '∞' : isAnonymous ? '无限' : userCredits} {isAnonymous ? '免费' : '积分'}
                   </span>
                 </>
               )}
@@ -973,18 +1133,159 @@ export default function NanoPage() {
 
       {/* Result Display */}
       {result && (
-        <div style={{
+        <div className="result-section" style={{
           padding: '2rem',
           maxWidth: '1400px',
           margin: '0 auto'
         }}>
-          <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <h3 style={{
+              fontSize: '1.5rem',
+              marginBottom: '0.5rem',
+              background: 'linear-gradient(135deg, #10b981, #00d4ff)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
             🎉 生成结果
           </h3>
-          {(result.imageData || result.imageUrl) ? (
+
+            {/* 批量生成统计 */}
+            {result.images && result.images.length > 0 && (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '1rem',
+                backgroundColor: '#1a1a1a',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '2rem',
+                border: '1px solid #10b981',
+                marginTop: '1rem'
+              }}>
+                <div style={{ color: '#10b981', fontSize: '1.2rem' }}>✨</div>
+                                  <div>
+                    <div style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                      生成成功 {result.totalGenerated}/{result.requestedCount} 张
+                    </div>
+                    <div style={{ color: '#888', fontSize: '0.8rem' }}>
+                      {isAnonymous ? '免费生成 · 无限制使用' : `消耗 ${result.creditsDeducted} 积分 · 剩余 ${result.remainingCredits} 积分`}
+                    </div>
+                  </div>
+              </div>
+            )}
+          </div>
+
+          {/* 批量图片显示 */}
+          {result.images && result.images.length > 0 ? (
+            <div className="result-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '2rem',
+              marginBottom: '2rem'
+            }}>
+              {result.images.map((image: any, index: number) => (
+                <div key={index} style={{
+                  backgroundColor: '#111111',
+                  borderRadius: '1rem',
+                  overflow: 'hidden',
+                  border: '1px solid #333',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)'
+                  e.currentTarget.style.boxShadow = '0 15px 40px rgba(16, 185, 129, 0.3)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}>
+                  <div style={{
+                    position: 'relative',
+                    backgroundColor: '#0a0a0a',
+                    padding: '0.5rem 1rem',
+                    borderBottom: '1px solid #333'
+                  }}>
+                    <span style={{
+                      color: '#10b981',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold'
+                    }}>
+                      图片 {image.index}
+                    </span>
+                  </div>
+
+                  <img
+                    className="result-image"
+                    src={`data:${image.mimeType};base64,${image.imageData}`}
+                    alt={`Generated ${image.index}`}
+                    style={{
+                      width: '100%',
+                      height: '250px',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                  />
+
+                  <div style={{
+                    padding: '1rem',
+                    display: 'flex',
+                    gap: '0.5rem',
+                    justifyContent: 'center'
+                  }}>
+                    <button
+                      onClick={() => {
+                        const link = document.createElement('a')
+                        link.href = `data:${image.mimeType};base64,${image.imageData}`
+                        link.download = `nano-banana-${Date.now()}-${image.index}.png`
+                        link.click()
+                      }}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      💾 下载
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`data:${image.mimeType};base64,${image.imageData}`)
+                        alert('图片已复制到剪贴板！')
+                      }}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      📋 复制
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : result.imageData || result.imageUrl ? (
+            /* 单图片显示（向后兼容） */
             <div style={{ textAlign: 'center' }}>
               <img
                 id="generated-image"
+                className="result-image"
                 src={result.imageUrl || `data:${result.mimeType};base64,${result.imageData}`}
                 alt="Generated"
                 style={{
@@ -1025,7 +1326,7 @@ export default function NanoPage() {
                           const url = URL.createObjectURL(blob)
                           const a = document.createElement('a')
                           a.href = url
-                          a.download = `gemini-generated-${Date.now()}.png`
+                          a.download = `nano-banana-${Date.now()}.png`
                           document.body.appendChild(a)
                           a.click()
                           document.body.removeChild(a)
@@ -1148,6 +1449,39 @@ export default function NanoPage() {
                 </button>
               </div>
             </div>
+          ) : result.text || result.content || result.message ? (
+            /* 文本响应显示 */
+            <div style={{
+              backgroundColor: '#111111',
+              borderRadius: '1rem',
+              padding: '2rem',
+              textAlign: 'center',
+              maxWidth: '600px',
+              margin: '0 auto'
+            }}>
+              <div style={{ color: '#10b981', fontSize: '2rem', marginBottom: '1rem' }}>💭</div>
+              <p style={{ fontSize: '1.1rem', color: '#ccc', lineHeight: '1.6' }}>
+                {result.text || result.content || result.message}
+              </p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(result.text || result.content || result.message)
+                  alert('文本已复制到剪贴板！')
+                }}
+                style={{
+                  marginTop: '1rem',
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                📋 复制文本
+              </button>
+            </div>
           ) : (
             <div style={{
               backgroundColor: '#111111',
@@ -1200,7 +1534,7 @@ export default function NanoPage() {
           🎨 使用示例
         </h2>
         
-        <div style={{
+        <div className="examples-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
           gap: '1.5rem',
@@ -1304,7 +1638,7 @@ export default function NanoPage() {
           }}>
             💡 提示词技巧
           </h3>
-          <div style={{
+          <div className="tips-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
             gap: '1rem'
@@ -1347,7 +1681,7 @@ export default function NanoPage() {
           }}>
             📝 常用提示词模板
           </h3>
-          <div style={{
+          <div className="templates-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1rem'

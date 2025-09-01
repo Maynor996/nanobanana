@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '../server-config'
 import { headers } from 'next/headers'
+import { addUserCredits } from '../../../lib/credits'
 
 export const runtime = 'nodejs'
 
@@ -78,23 +79,16 @@ async function handlePaymentSuccess(paymentIntent: any) {
 
     console.log(`支付成功: 客户 ${customerEmail}, 套餐 ${planId}, 积分 ${credits}`)
 
-    // 这里你需要实现:
-    // 1. 更新用户积分到数据库
-    // 2. 记录支付成功日志
-    // 3. 发送确认邮件 (可选)
-    // 4. 触发其他业务逻辑
+    // 更新用户积分
+    const updatedUser = addUserCredits(customerEmail, parseInt(credits), planId)
 
-    // 示例实现 (需要根据你的数据库结构调整):
-    /*
-    await updateUserCredits({
-      email: customerEmail,
-      creditsToAdd: parseInt(credits),
-      paymentIntentId: paymentIntent.id,
-      planId: planId
-    })
-    */
+    console.log(`积分已更新: ${customerEmail} +${credits}积分，当前积分: ${updatedUser.credits}`)
 
-    console.log(`积分已添加: ${customerEmail} +${credits}积分`)
+    // 这里可以添加更多业务逻辑：
+    // 1. 发送确认邮件
+    // 2. 更新用户状态
+    // 3. 记录到数据库
+    // 4. 触发其他业务流程
 
   } catch (error) {
     console.error('处理支付成功事件失败:', error)
