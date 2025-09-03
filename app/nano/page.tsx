@@ -248,7 +248,7 @@ export default function NanoPage() {
         : { prompt: finalPrompt, imageDataArray }
 
       // 添加用户标识到请求
-      const requestData = {
+      const requestData: any = {
         ...requestBody,
         count: imageCount
       }
