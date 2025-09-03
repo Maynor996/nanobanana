@@ -2,33 +2,44 @@ import nodemailer from 'nodemailer'
 
 // 创建邮件发送器
 const createTransporter = () => {
-  // 您可以根据需要配置不同的邮件服务
-  
-  // 方案1: 使用QQ邮箱SMTP（根据您提供的配置）
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  // 开发模式：不联网，直接把邮件写入内存（控制台可见）
+  if (process.env.EMAIL_DEV_MODE === 'true') {
     return nodemailer.createTransport({
-      host: process.env.SMTP_HOST, // 如: smtp.qq.com
-      port: parseInt(process.env.SMTP_PORT || '465'),
-      secure: process.env.SMTP_PORT === '465', // 465端口使用SSL，587使用TLS
-      auth: {
-        user: process.env.SMTP_USER, // 您的QQ邮箱
-        pass: process.env.SMTP_PASS, // QQ邮箱授权码
-      },
+      streamTransport: true,
+      newline: 'unix',
+      buffer: true
     })
   }
 
-  // 方案2: 使用Gmail SMTP
+  // 方案1: QQ 邮箱 SMTP
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST, // 如: smtp.qq.com
+      port: parseInt(process.env.SMTP_PORT || '587'), // 更通用：默认用 587(TLS)
+      secure: process.env.SMTP_PORT === '465',        // 465 才走 SSL
+      requireTLS: process.env.SMTP_PORT !== '465',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      },
+      tls: {
+        rejectUnauthorized: false // 开发环境放宽校验
+      }
+    })
+  }
+
+  // 方案2: Gmail
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
     return nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
+        pass: process.env.GMAIL_APP_PASSWORD
+      }
     })
   }
 
-  // 方案3: 开发环境使用Ethereal测试邮箱
+  // 方案3: Ethereal（测试）
   return nodemailer.createTransport({
     host: 'smtp.ethereal.email',
     port: 587,
@@ -42,6 +53,13 @@ const createTransporter = () => {
 // 发送验证码邮件
 export async function sendVerificationEmail(to: string, code: string): Promise<boolean> {
   try {
+    // 开发最小 MVP：直接打印验证码并返回成功
+    if (process.env.EMAIL_DEV_MODE === 'true') {
+      console.log('[DEV EMAIL] to=', to, 'code=', code, '(5分钟有效)')
+      await new Promise(r => setTimeout(r, 200))
+      return true
+    }
+
     const transporter = createTransporter()
 
     const mailOptions = {
@@ -49,36 +67,17 @@ export async function sendVerificationEmail(to: string, code: string): Promise<b
       to,
       subject: '🍌 Nano Banana 验证码',
       html: `
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #10b981; font-size: 28px; margin: 0;">🍌 Nano Banana</h1>
-            <p style="color: #6b7280; margin: 10px 0 0 0;">AI图像生成平台</p>
+        <div style="max-width:600px;margin:0 auto;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+          <div style="text-align:center;margin-bottom:30px;">
+            <h1 style="color:#10b981;font-size:28px;margin:0;">🍌 Nano Banana</h1>
+            <p style="color:#6b7280;margin:10px 0 0;">AI图像生成平台</p>
           </div>
-          
-          <div style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #10b981; border-radius: 12px; padding: 30px; text-align: center; margin-bottom: 30px;">
-            <h2 style="color: #065f46; margin: 0 0 15px 0; font-size: 24px;">您的验证码</h2>
-            <div style="background: white; border: 2px solid #10b981; border-radius: 8px; padding: 20px; margin: 20px 0; display: inline-block;">
-              <span style="font-size: 32px; font-weight: bold; color: #10b981; letter-spacing: 5px;">${code}</span>
+          <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid #10b981;border-radius:12px;padding:30px;text-align:center;margin-bottom:30px;">
+            <h2 style="color:#065f46;margin:0 0 15px;font-size:24px;">您的验证码</h2>
+            <div style="background:#fff;border:2px solid #10b981;border-radius:8px;padding:20px;margin:20px 0;display:inline-block;">
+              <span style="font-size:32px;font-weight:bold;color:#10b981;letter-spacing:5px;">${code}</span>
             </div>
-            <p style="color: #374151; margin: 15px 0 0 0; font-size: 14px;">验证码有效期为 5 分钟</p>
-          </div>
-          
-          <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
-            <h3 style="color: #374151; margin: 0 0 15px 0; font-size: 18px;">🚀 登录后可享受：</h3>
-            <ul style="color: #6b7280; margin: 0; padding-left: 20px;">
-              <li>5个免费积分</li>
-              <li>批量生成多张图片</li>
-              <li>专业级AI引擎</li>
-              <li>高速处理速度</li>
-            </ul>
-          </div>
-          
-          <div style="text-align: center; color: #9ca3af; font-size: 12px; line-height: 1.5;">
-            <p>如果您没有请求此验证码，请忽略此邮件。</p>
-            <p>此邮件由系统自动发送，请勿回复。</p>
-            <p style="margin-top: 20px;">
-              © 2024 Nano Banana. All rights reserved.
-            </p>
+            <p style="color:#374151;margin:15px 0 0;font-size:14px;">验证码有效期为 5 分钟</p>
           </div>
         </div>
       `,
@@ -88,27 +87,11 @@ Nano Banana 验证码
 您的验证码是: ${code}
 
 验证码有效期为 5 分钟。
-
-登录后可享受：
-- 5个免费积分
-- 批量生成多张图片  
-- 专业级AI引擎
-- 高速处理速度
-
-如果您没有请求此验证码，请忽略此邮件。
-
-© 2024 Nano Banana
-      `.trim()
+`.trim()
     }
 
     const info = await transporter.sendMail(mailOptions)
-    
-    console.log('📧 邮件发送成功:', {
-      to,
-      messageId: info.messageId,
-      response: info.response
-    })
-    
+    console.log('📧 邮件发送成功:', { to, messageId: info.messageId, response: info.response })
     return true
   } catch (error) {
     console.error('📧 邮件发送失败:', error)
@@ -126,4 +109,4 @@ export async function testEmailConfig(): Promise<{ success: boolean; message: st
     console.error('邮件配置测试失败:', error)
     return { success: false, message: `邮件配置错误: ${error}` }
   }
-} 
+}

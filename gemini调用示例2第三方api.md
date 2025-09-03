@@ -107,7 +107,7 @@ components:
       type: http
       scheme: bearer
 servers:
-  - url: https://yunwu.ai
+  - url: https://apipro.maynor1024.live
     description: 正式环境
 security:
   - bearer: []
