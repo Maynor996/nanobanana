@@ -23,6 +23,7 @@ export default function NanoPage() {
   const [sessionId, setSessionId] = useState<string>('')
   const [isAnonymous, setIsAnonymous] = useState(true)
   const [forceShowLogin, setForceShowLogin] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const quickPrompts = [
     { icon: '🏔️', text: '风景', value: '美丽的自然风景' },
@@ -356,7 +357,10 @@ export default function NanoPage() {
           {!userEmail ? (
             <>
               <button
-                onClick={() => setForceShowLogin(true)}
+                onClick={() => {
+                  console.log('登录按钮被点击')
+                  setShowLoginModal(true)
+                }}
                 style={{
                   backgroundColor: 'transparent',
                   color: '#888',
@@ -364,12 +368,40 @@ export default function NanoPage() {
                   padding: '0.5rem 0.9rem',
                   borderRadius: '0.5rem',
                   cursor: 'pointer',
-                  fontSize: '0.9rem'
+                  fontSize: '0.9rem',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)'
+                  e.currentTarget.style.borderColor = '#10b981'
+                  e.currentTarget.style.color = '#10b981'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.borderColor = '#333'
+                  e.currentTarget.style.color = '#888'
                 }}
               >
                 登录
               </button>
-              <AnonymousUser onSessionReady={handleSessionReady} forceShowLogin={forceShowLogin} />
+              <AnonymousUser 
+                onSessionReady={handleSessionReady} 
+                forceShowLogin={forceShowLogin}
+                onLoginComplete={() => setForceShowLogin(false)}
+              />
+              {/* 直接显示的登录弹窗 */}
+              {showLoginModal && (
+                <UserAuth
+                  onAuth={(email) => {
+                    handleUserAuth(email)
+                    setShowLoginModal(false)
+                  }}
+                  onCreditsUpdate={handleCreditsUpdate}
+                  autoOpen={true}
+                  hideTrigger={true}
+                  onClose={() => setShowLoginModal(false)}
+                />
+              )}
             </>
           ) : (
             <UserAuth

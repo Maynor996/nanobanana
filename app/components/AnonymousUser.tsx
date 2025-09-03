@@ -7,9 +7,10 @@ import UserAuth from './UserAuth'
 interface AnonymousUserProps {
   onSessionReady: (sessionId: string) => void
   forceShowLogin?: boolean
+  onLoginComplete?: () => void
 }
 
-export default function AnonymousUser({ onSessionReady, forceShowLogin }: AnonymousUserProps) {
+export default function AnonymousUser({ onSessionReady, forceShowLogin, onLoginComplete }: AnonymousUserProps) {
   const [sessionId, setSessionId] = useState<string>('')
   const [remainingUses, setRemainingUses] = useState<number>(3)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
@@ -75,6 +76,7 @@ export default function AnonymousUser({ onSessionReady, forceShowLogin }: Anonym
     setSessionId(newSessionId)
     localStorage.setItem('nano_session_id', newSessionId)
     onSessionReady(newSessionId)
+    onLoginComplete?.() // 通知父组件登录完成
   }
 
   if (showAuth) {
