@@ -224,16 +224,23 @@ export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 
                 ✨
               </div>
             </div>
-            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{
-                color: '#10b981',
-                marginBottom: '0.25rem',
+                color: '#ffffff',
+                marginBottom: '0.5rem',
                 fontSize: '1.8rem',
                 fontWeight: '600'
               }}>
                 登录
               </h2>
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <p style={{
+                color: '#9ca3af',
+                fontSize: '1rem',
+                margin: '0'
+              }}>
+                登录您的账户
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.75rem' }}>
                 <span style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -245,36 +252,12 @@ export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 
                   borderRadius: '999px',
                   fontSize: '0.85rem'
                 }}>
-                  🔒 登录之后可免费试用
+                  🎁 登录之后可免费试用
                 </span>
               </div>
             </div>
 
-            {/* 免费试用提示 */}
-            <div style={{
-              backgroundColor: '#0f2419',
-              border: '1px solid #10b981',
-              borderRadius: '0.75rem',
-              padding: '1rem',
-              marginBottom: '2rem',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                color: '#10b981',
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                marginBottom: '0.25rem'
-              }}>
-                🎁 免费试用
-              </div>
-              <p style={{
-                color: '#ccc',
-                fontSize: '0.9rem',
-                margin: '0'
-              }}>
-                登录之后可免费试用 <span style={{ color: '#10b981', fontWeight: 'bold' }}>3次</span> AI图像生成
-              </p>
-            </div>
+
 
             {/* 登录方式：大按钮样式 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
@@ -282,40 +265,64 @@ export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 
                 onClick={() => setLoginMethod('google')}
                 style={{
                   width: '100%',
-                  padding: '0.9rem 1rem',
-                  backgroundColor: '#0f1115',
-                  border: '1px solid #2b2f36',
+                  padding: '1rem 1.25rem',
+                  backgroundColor: '#1f2937',
+                  border: '1px solid #374151',
                   borderRadius: '0.75rem',
-                  color: '#e5e7eb',
+                  color: '#f3f4f6',
                   cursor: 'pointer',
-                  fontSize: '0.95rem',
+                  fontSize: '1rem',
+                  fontWeight: '500',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.5rem'
+                  gap: '0.75rem',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#374151'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1f2937'
+                  e.currentTarget.style.transform = 'none'
                 }}
               >
-                <span style={{ fontSize: '1.1rem' }}>G</span>
+                <span style={{ 
+                  fontSize: '1.2rem',
+                  fontWeight: 'bold',
+                  color: '#4285f4'
+                }}>G</span>
                 使用 Google 登录
               </button>
               <button
                 onClick={() => setLoginMethod('email')}
                 style={{
                   width: '100%',
-                  padding: '0.9rem 1rem',
-                  background: 'linear-gradient(135deg, #0a2a1f, #0f2419)',
-                  border: '1px solid #10b981',
+                  padding: '1rem 1.25rem',
+                  backgroundColor: '#1f2937',
+                  border: '1px solid #374151',
                   borderRadius: '0.75rem',
-                  color: '#c8ffe6',
+                  color: '#f3f4f6',
                   cursor: 'pointer',
-                  fontSize: '0.95rem',
+                  fontSize: '1rem',
+                  fontWeight: '500',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.5rem'
+                  gap: '0.75rem',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#374151'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1f2937'
+                  e.currentTarget.style.transform = 'none'
                 }}
               >
-                <span style={{ fontSize: '1.1rem' }}>✉️</span>
+                <span style={{ fontSize: '1.2rem' }}>✉️</span>
                 使用邮箱登录
               </button>
             </div>
@@ -324,40 +331,36 @@ export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 
             {loginMethod === 'email' ? (
               <div>
                 <div style={{
-                  border: '1px solid #1f2937',
-                  borderRadius: '0.75rem',
-                  overflow: 'hidden',
-                  marginBottom: '0.75rem'
+                  marginBottom: '1rem'
                 }}>
-                  <div style={{
-                    padding: '0.75rem 1rem',
-                    borderBottom: '1px solid #1f2937',
+                  <label style={{
+                    display: 'block',
                     color: '#9ca3af',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    marginBottom: '0.5rem'
                   }}>
-                    输入您的邮箱
-                  </div>
-                  <div style={{ padding: '0.75rem 1rem' }}>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="m@example.com"
-                      style={{
-                        width: '100%',
-                        padding: '0.8rem',
-                        backgroundColor: '#0f1115',
-                        border: '1px solid #2b2f36',
-                        borderRadius: '0.5rem',
-                        color: 'white',
-                        fontSize: '1rem',
-                        outline: 'none'
-                      }}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = '#10b981' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = '#2b2f36' }}
-                      autoFocus
-                    />
-                  </div>
+                    邮箱
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="m@example.com"
+                    style={{
+                      width: '100%',
+                      padding: '0.9rem 1rem',
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '0.5rem',
+                      color: 'white',
+                      fontSize: '1rem',
+                      outline: 'none',
+                      transition: 'border-color 0.2s ease'
+                    }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = '#10b981' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = '#374151' }}
+                    autoFocus
+                  />
                 </div>
                 <button
                   onClick={handleLogin}
@@ -365,21 +368,53 @@ export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 
                   style={{
                     width: '100%',
                     padding: '0.9rem 1rem',
-                    background: email.includes('@') ? 'linear-gradient(135deg, #10b981, #059669)' : '#1f2937',
+                    background: email.includes('@') ? 'linear-gradient(135deg, #10b981, #059669)' : '#374151',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '0.75rem',
+                    borderRadius: '0.5rem',
                     cursor: email.includes('@') ? 'pointer' : 'not-allowed',
                     fontSize: '1rem',
                     fontWeight: '500',
-                    transition: 'all 0.3s ease',
-                    marginBottom: '0.75rem'
+                    transition: 'all 0.2s ease',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
                   }}
-                  onMouseEnter={(e) => { if (email.includes('@')) e.currentTarget.style.transform = 'translateY(-2px)' }}
-                  onMouseLeave={(e) => { if (email.includes('@')) e.currentTarget.style.transform = 'none' }}
+                  onMouseEnter={(e) => { 
+                    if (email.includes('@')) {
+                      e.currentTarget.style.transform = 'translateY(-1px)'
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)'
+                    }
+                  }}
+                  onMouseLeave={(e) => { 
+                    if (email.includes('@')) {
+                      e.currentTarget.style.transform = 'none'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }
+                  }}
                 >
-                  发送验证码
+                  ✉️ 发送验证码
                 </button>
+                <div style={{
+                  textAlign: 'center',
+                  marginBottom: '1rem'
+                }}>
+                  <button
+                    onClick={() => setLoginMethod('google')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#6b7280',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    返回
+                  </button>
+                </div>
               </div>
             ) : (
               <div>
