@@ -18,6 +18,10 @@ export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 
   const [isUnlimited, setIsUnlimited] = useState(false)
   const [showModal, setShowModal] = useState(autoOpen)
   const [loginMethod, setLoginMethod] = useState<'email' | 'google'>('email')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [isCodeSent, setIsCodeSent] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [countdown, setCountdown] = useState(0)
 
   useEffect(() => {
     // 检查本地存储是否有登录信息
@@ -41,6 +45,90 @@ export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 
       }
     } catch (error) {
       console.error('获取积分失败:', error)
+    }
+  }
+
+  // 发送验证码
+  const handleSendCode = async () => {
+    if (!email || !email.includes('@')) {
+      alert('请输入有效的邮箱地址')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/auth/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setIsCodeSent(true)
+        setCountdown(60) // 60秒倒计时
+        
+        // 开始倒计时
+        const timer = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(timer)
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+        
+        alert('验证码已发送到您的邮箱，请查收')
+      } else {
+        alert(data.error || '发送失败，请重试')
+      }
+    } catch (error) {
+      console.error('发送验证码失败:', error)
+      alert('网络错误，请重试')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 验证验证码并登录
+  const handleVerifyAndLogin = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      alert('请输入6位验证码')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: verificationCode })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        localStorage.setItem('nano_user_email', email)
+        setIsLoggedIn(true)
+        setShowModal(false)
+        onAuth(email)
+        
+        // 更新积分信息
+        setCredits(data.user.credits)
+        setIsUnlimited(data.user.isUnlimited)
+        onCreditsUpdate?.(data.user.credits, data.user.isUnlimited)
+        
+        alert('登录成功！')
+      } else {
+        alert(data.error || '验证失败，请重试')
+      }
+    } catch (error) {
+      console.error('验证失败:', error)
+      alert('网络错误，请重试')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -330,79 +418,185 @@ export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 
             {/* 登录表单 */}
             {loginMethod === 'email' ? (
               <div>
-                <div style={{
-                  marginBottom: '1rem'
-                }}>
-                  <label style={{
-                    display: 'block',
-                    color: '#9ca3af',
-                    fontSize: '0.9rem',
-                    marginBottom: '0.5rem'
-                  }}>
-                    邮箱
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="m@example.com"
-                    style={{
-                      width: '100%',
-                      padding: '0.9rem 1rem',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '0.5rem',
-                      color: 'white',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      transition: 'border-color 0.2s ease'
-                    }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = '#10b981' }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = '#374151' }}
-                    autoFocus
-                  />
-                </div>
-                <button
-                  onClick={handleLogin}
-                  disabled={!email.includes('@')}
-                  style={{
-                    width: '100%',
-                    padding: '0.9rem 1rem',
-                    background: email.includes('@') ? 'linear-gradient(135deg, #10b981, #059669)' : '#374151',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    cursor: email.includes('@') ? 'pointer' : 'not-allowed',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                    transition: 'all 0.2s ease',
-                    marginBottom: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem'
-                  }}
-                  onMouseEnter={(e) => { 
-                    if (email.includes('@')) {
-                      e.currentTarget.style.transform = 'translateY(-1px)'
-                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)'
-                    }
-                  }}
-                  onMouseLeave={(e) => { 
-                    if (email.includes('@')) {
-                      e.currentTarget.style.transform = 'none'
-                      e.currentTarget.style.boxShadow = 'none'
-                    }
-                  }}
-                >
-                  ✉️ 发送验证码
-                </button>
+                {!isCodeSent ? (
+                  // 第一步：输入邮箱
+                  <>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{
+                        display: 'block',
+                        color: '#9ca3af',
+                        fontSize: '0.9rem',
+                        marginBottom: '0.5rem'
+                      }}>
+                        邮箱
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="m@example.com"
+                        style={{
+                          width: '100%',
+                          padding: '0.9rem 1rem',
+                          backgroundColor: '#1f2937',
+                          border: '1px solid #374151',
+                          borderRadius: '0.5rem',
+                          color: 'white',
+                          fontSize: '1rem',
+                          outline: 'none',
+                          transition: 'border-color 0.2s ease'
+                        }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = '#10b981' }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = '#374151' }}
+                        autoFocus
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSendCode}
+                      disabled={!email.includes('@') || isLoading}
+                      style={{
+                        width: '100%',
+                        padding: '0.9rem 1rem',
+                        background: (email.includes('@') && !isLoading) ? 'linear-gradient(135deg, #10b981, #059669)' : '#374151',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: (email.includes('@') && !isLoading) ? 'pointer' : 'not-allowed',
+                        fontSize: '1rem',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        opacity: isLoading ? 0.7 : 1
+                      }}
+                    >
+                      {isLoading ? '发送中...' : '✉️ 发送验证码'}
+                    </button>
+                  </>
+                ) : (
+                  // 第二步：输入验证码
+                  <>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{
+                        display: 'block',
+                        color: '#9ca3af',
+                        fontSize: '0.9rem',
+                        marginBottom: '0.5rem'
+                      }}>
+                        验证码
+                      </label>
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="请输入6位验证码"
+                        style={{
+                          width: '100%',
+                          padding: '0.9rem 1rem',
+                          backgroundColor: '#1f2937',
+                          border: '1px solid #374151',
+                          borderRadius: '0.5rem',
+                          color: 'white',
+                          fontSize: '1rem',
+                          outline: 'none',
+                          transition: 'border-color 0.2s ease',
+                          textAlign: 'center',
+                          letterSpacing: '0.2em'
+                        }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = '#10b981' }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = '#374151' }}
+                        autoFocus
+                        disabled={isLoading}
+                        maxLength={6}
+                      />
+                      <div style={{
+                        textAlign: 'center',
+                        marginTop: '0.5rem',
+                        fontSize: '0.8rem',
+                        color: '#6b7280'
+                      }}>
+                        验证码已发送至 {email}
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleVerifyAndLogin}
+                      disabled={verificationCode.length !== 6 || isLoading}
+                      style={{
+                        width: '100%',
+                        padding: '0.9rem 1rem',
+                        background: (verificationCode.length === 6 && !isLoading) ? 'linear-gradient(135deg, #10b981, #059669)' : '#374151',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: (verificationCode.length === 6 && !isLoading) ? 'pointer' : 'not-allowed',
+                        fontSize: '1rem',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        opacity: isLoading ? 0.7 : 1
+                      }}
+                    >
+                      {isLoading ? '验证中...' : '🚀 验证并登录'}
+                    </button>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '1rem'
+                    }}>
+                      <button
+                        onClick={countdown > 0 ? undefined : handleSendCode}
+                        disabled={countdown > 0 || isLoading}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: countdown > 0 ? '#6b7280' : '#10b981',
+                          cursor: countdown > 0 ? 'not-allowed' : 'pointer',
+                          fontSize: '0.9rem',
+                          textDecoration: countdown > 0 ? 'none' : 'underline'
+                        }}
+                      >
+                        {countdown > 0 ? `${countdown}秒后可重发` : '重新发送'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsCodeSent(false)
+                          setVerificationCode('')
+                          setCountdown(0)
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#6b7280',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        修改邮箱
+                      </button>
+                    </div>
+                  </>
+                )}
                 <div style={{
                   textAlign: 'center',
                   marginBottom: '1rem'
                 }}>
                   <button
-                    onClick={() => setLoginMethod('google')}
+                    onClick={() => {
+                      setLoginMethod('google')
+                      setIsCodeSent(false)
+                      setVerificationCode('')
+                      setCountdown(0)
+                    }}
                     style={{
                       background: 'none',
                       border: 'none',
