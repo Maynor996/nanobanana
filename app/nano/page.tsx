@@ -354,11 +354,29 @@ export default function NanoPage() {
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           {!userEmail ? (
-            <AnonymousUser onSessionReady={handleSessionReady} forceShowLogin={forceShowLogin} />
+            <>
+              <button
+                onClick={() => setForceShowLogin(true)}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: '#888',
+                  border: '1px solid #333',
+                  padding: '0.5rem 0.9rem',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                登录
+              </button>
+              <AnonymousUser onSessionReady={handleSessionReady} forceShowLogin={forceShowLogin} />
+            </>
           ) : (
             <UserAuth
               onAuth={handleUserAuth}
               onCreditsUpdate={handleCreditsUpdate}
+              triggerText="登录"
+              hideTrigger
             />
           )}
         </div>

@@ -5,14 +5,18 @@ import { useState, useEffect } from 'react'
 interface UserAuthProps {
   onAuth: (email: string) => void
   onCreditsUpdate?: (credits: number, isUnlimited: boolean) => void
+  triggerText?: string
+  hideTrigger?: boolean
+  autoOpen?: boolean
+  onClose?: () => void
 }
 
-export default function UserAuth({ onAuth, onCreditsUpdate }: UserAuthProps) {
+export default function UserAuth({ onAuth, onCreditsUpdate, triggerText = '🚀 开始使用', hideTrigger = false, autoOpen = false, onClose }: UserAuthProps) {
   const [email, setEmail] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [credits, setCredits] = useState(0)
   const [isUnlimited, setIsUnlimited] = useState(false)
-  const [showModal, setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(autoOpen)
   const [loginMethod, setLoginMethod] = useState<'email' | 'google'>('email')
 
   useEffect(() => {
@@ -55,6 +59,10 @@ export default function UserAuth({ onAuth, onCreditsUpdate }: UserAuthProps) {
     alert('Google登录功能开发中，暂时使用邮箱登录')
     setLoginMethod('email')
   }
+
+  useEffect(() => {
+    if (autoOpen) setShowModal(true)
+  }, [autoOpen])
 
   const handleLogout = () => {
     localStorage.removeItem('nano_user_email')
@@ -118,33 +126,35 @@ export default function UserAuth({ onAuth, onCreditsUpdate }: UserAuthProps) {
 
   return (
     <>
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            backgroundColor: '#10b981',
-            color: 'white',
-            border: 'none',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '0.75rem',
-            cursor: 'pointer',
-            fontWeight: '500',
-            fontSize: '0.9rem',
-            boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)'
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.4)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'none'
-            e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)'
-          }}
-        >
-          🚀 开始使用
-        </button>
-      </div>
+      {!hideTrigger && (
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              padding: '0.6rem 1rem',
+              borderRadius: '0.75rem',
+              cursor: 'pointer',
+              fontWeight: '500',
+              fontSize: '0.9rem',
+              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.4)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none'
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)'
+            }}
+          >
+            {triggerText}
+          </button>
+        </div>
+      )}
 
       {/* 登录模态框 */}
       {showModal && (
@@ -173,7 +183,7 @@ export default function UserAuth({ onAuth, onCreditsUpdate }: UserAuthProps) {
           }}>
             {/* 关闭按钮 */}
             <button
-              onClick={() => setShowModal(false)}
+              onClick={() => { setShowModal(false); onClose?.() }}
               style={{
                 position: 'absolute',
                 top: '1rem',
