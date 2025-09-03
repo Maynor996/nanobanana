@@ -966,7 +966,7 @@ export default function NanoPage() {
                       fontSize: '0.7rem',
                       padding: '0.2rem 0.4rem',
                       borderRadius: '0.3rem',
-                      backgroundColor: isUnlimited ? '#10b981' : 'pro' ? '#8b5cf6' : '#6b7280',
+                      backgroundColor: isUnlimited ? '#10b981' : '#8b5cf6',
                       color: 'white'
                     }}>
                       {isUnlimited ? '无限版' : '专业版'}
