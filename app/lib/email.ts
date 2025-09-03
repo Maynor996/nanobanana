@@ -6,7 +6,7 @@ const createTransporter = () => {
   
   // 方案1: 使用QQ邮箱SMTP（根据您提供的配置）
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: process.env.SMTP_HOST, // 如: smtp.qq.com
       port: parseInt(process.env.SMTP_PORT || '465'),
       secure: process.env.SMTP_PORT === '465', // 465端口使用SSL，587使用TLS
@@ -19,7 +19,7 @@ const createTransporter = () => {
 
   // 方案2: 使用Gmail SMTP
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,
@@ -29,7 +29,7 @@ const createTransporter = () => {
   }
 
   // 方案3: 开发环境使用Ethereal测试邮箱
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: 'smtp.ethereal.email',
     port: 587,
     auth: {
