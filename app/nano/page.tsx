@@ -29,6 +29,9 @@ export default function NanoPage() {
   const [isAnonymous, setIsAnonymous] = useState(true)
   const [forceShowLogin, setForceShowLogin] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [errorModalTitle, setErrorModalTitle] = useState('')
+  const [errorModalMessage, setErrorModalMessage] = useState('')
 
   const quickPrompts = [
     { icon: '🏔️', text: '风景', value: '美丽的自然风景' },
@@ -133,7 +136,7 @@ export default function NanoPage() {
         })
       } catch (error) {
         console.error('图片上传失败:', error)
-        alert('图片上传失败，请重试')
+        showError('上传失败', '图片上传失败，请重试')
       } finally {
         setIsUploading(false)
       }
@@ -202,12 +205,12 @@ export default function NanoPage() {
         })
       } catch (error) {
         console.error('拖拽上传失败:', error)
-        alert('图片上传失败，请重试')
+        showError('上传失败', '图片上传失败，请重试')
       } finally {
         setIsUploading(false)
       }
     } else {
-      alert('请上传图片文件')
+      showError('文件类型错误', '请上传图片文件')
     }
   }
 
@@ -269,30 +272,37 @@ export default function NanoPage() {
     return Promise.all(promises)
   }
 
+  // 显示错误弹窗的函数
+  const showError = (title: string, message: string) => {
+    setErrorModalTitle(title)
+    setErrorModalMessage(message)
+    setShowErrorModal(true)
+  }
+
   const handleGenerate = async () => {
     if (!sessionId) {
-      alert('正在初始化，请稍候...')
+      showError('系统提示', '正在初始化，请稍候...')
       return
     }
 
     if (mode === 'text' && prompt.length < 3) {
-      alert('请输入至少3个字符的描述')
+      showError('输入提示', '请输入至少3个字符的描述')
       return
     }
     if (mode === 'upload' && imageFiles.length === 0) {
       console.log('图片检查失败:', { mode, imageFilesLength: imageFiles.length, imageFiles, isUploading })
-      alert('请先上传图片')
+      showError('上传提示', '请先上传图片')
       return
     }
     
     if (isUploading) {
-      alert('图片正在上传中，请稍候...')
+      showError('上传提示', '图片正在上传中，请稍候...')
       return
     }
 
     // 现在匿名用户可以无限使用，不需要检查积分
     if (!isAnonymous && !isUnlimited && userCredits <= 0) {
-      alert('积分不足，请先购买套餐')
+      showError('积分不足', '积分不足，请先购买套餐')
       window.location.href = '/pricing'
       return
     }
@@ -358,7 +368,7 @@ export default function NanoPage() {
         data = await response.json()
       } catch (parseError) {
         console.error('JSON解析错误:', parseError)
-        alert(`API响应解析失败，请稍后重试。使用的模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+        showError('API解析错误', `API响应解析失败，请稍后重试。使用的模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
         return
       }
 
@@ -369,27 +379,27 @@ export default function NanoPage() {
             setUserCredits(0)
             setIsAnonymous(false) // 设置为非匿名用户以触发登录提示
             setForceShowLogin(true) // 强制显示登录提示
-            alert(data.error || '您的免费试用次数已用完，请登录账号继续使用')
+            showError('免费试用结束', data.error || '您的免费试用次数已用完，请登录账号继续使用')
             return
           } else {
-            alert(data.error || '积分不足')
+            showError('积分不足', data.error || '积分不足')
             window.location.href = '/pricing'
             return
           }
         } else if (response.status === 401) {
-          alert(data.error || '请先登录')
+          showError('登录提示', data.error || '请先登录')
           return
         } else if (response.status === 524) {
           const errorMsg = `服务器响应超时，请稍后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
-          setError(errorMsg)
+          showError('服务器超时', errorMsg)
           return
         } else if (response.status === 500) {
           const errorMsg = `服务器内部错误：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
-          setError(errorMsg)
+          showError('服务器超时', errorMsg)
           return
         }
         const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
-        setError(errorMsg)
+        showError('生成失败', errorMsg)
         return
       } else {
         setResult(data)
@@ -403,14 +413,14 @@ export default function NanoPage() {
       console.error('请求错误:', err)
       if (err instanceof Error) {
         if (err.message.includes('fetch')) {
-          setError(`网络连接失败，请检查网络后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+          showError('网络错误', `网络连接失败，请检查网络后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
         } else if (err.message.includes('timeout')) {
-          setError(`请求超时，请稍后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+          showError('请求超时', `请求超时，请稍后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
         } else {
-          setError(`发生错误：${err.message}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+          showError('发生错误', `发生错误：${err.message}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
         }
       } else {
-        setError(`未知错误，请重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+        showError('未知错误', `未知错误，请重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
       }
     } finally {
       setLoading(false)
@@ -1739,7 +1749,7 @@ export default function NanoPage() {
                           console.error('分享失败:', err)
                           // 如果分享失败，回退到复制链接
                           navigator.clipboard.writeText(img.src)
-                          alert('图片链接已复制到剪贴板')
+                          showError('复制成功', '图片链接已复制到剪贴板')
                         })
                     } else {
                       // 复制图片URL到剪贴板
@@ -1778,7 +1788,7 @@ export default function NanoPage() {
                     const img = document.getElementById('generated-image') as HTMLImageElement
                     if (img) {
                       navigator.clipboard.writeText(img.src)
-                      alert('图片链接已复制到剪贴板！')
+                      showError('复制成功', '图片链接已复制到剪贴板！')
                     }
                   }}
                   style={{
@@ -1826,7 +1836,7 @@ export default function NanoPage() {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(result.text || result.content || result.message)
-                  alert('文本已复制到剪贴板！')
+                  showError('复制成功', '文本已复制到剪贴板！')
                 }}
                 style={{
                   marginTop: '1rem',
@@ -1853,7 +1863,7 @@ export default function NanoPage() {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(result.text || result.content || result.message)
-                  alert('文本已复制到剪贴板！')
+                  showError('复制成功', '文本已复制到剪贴板！')
                 }}
                 style={{
                   marginTop: '1rem',
@@ -2097,6 +2107,87 @@ export default function NanoPage() {
           </div>
         </div>
       </div>
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            borderRadius: '1rem',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '90%',
+            border: '1px solid #ef4444',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{
+                fontSize: '3rem',
+                marginBottom: '1rem'
+              }}>
+                ⚠️
+              </div>
+              <h3 style={{
+                fontSize: '1.5rem',
+                color: '#ef4444',
+                marginBottom: '0.5rem',
+                fontWeight: 'bold'
+              }}>
+                {errorModalTitle}
+              </h3>
+              <p style={{
+                color: '#ccc',
+                fontSize: '1rem',
+                lineHeight: '1.5',
+                margin: 0
+              }}>
+                {errorModalMessage}
+              </p>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => setShowErrorModal(false)}
+                style={{
+                  padding: '0.75rem 2rem',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dc2626'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ef4444'
+                }}
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
