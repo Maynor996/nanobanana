@@ -21,14 +21,18 @@ A beautiful Next.js web application powered by Google's Gemini 2.5 Flash Image P
 ### 🔧 Technical Features
 - **Next.js 14**: Server-side rendering and API routes
 - **TypeScript**: Type-safe development
-- **Gemini 2.5 Flash**: Latest Google AI model for image generation
+- **Multi-Model Support**: 
+  - **Gemini 2.5 Flash**: Google's latest AI model for image generation
+  - **Doubao SeedReam 4.0**: ByteDance's advanced image generation model
 - **Vercel Ready**: Optimized for seamless deployment
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 18+ 
-- A Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- API keys for AI models:
+  - **Gemini API key** from [Google AI Studio](https://aistudio.google.com/app/apikey)
+  - **Doubao API key** from [Volcano Engine](https://console.volcengine.com/)
 
 ### Installation
 
@@ -47,9 +51,11 @@ A beautiful Next.js web application powered by Google's Gemini 2.5 Flash Image P
    ```bash
    cp .env.example .env.local
    ```
-   Edit `.env.local` and add your API key:
+   Edit `.env.local` and add your API keys:
    ```
-   GEMINI_API_KEY=your_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
+   MAYNOR_API_KEY=your_doubao_api_key_here
+   MAYNOR_API_URL=https://apipro.maynor1024.live
    ```
 
 4. **Run the development server**
@@ -90,18 +96,25 @@ Click the button above to deploy directly to Vercel.
 - **MVP Demo**: `/mvp` - Simple demo version
 - **Home**: `/` - Landing page
 
+### AI Model Selection
+Choose between two powerful AI models:
+- **🤖 Gemini 2.5 Flash**: Google's latest multimodal AI model
+- **🎨 Doubao SeedReam 4.0**: ByteDance's advanced image generation model
+
 ### Text-to-Image Generation
 1. Select "文生图模式" (Text-to-Image mode)
-2. Enter your description in Chinese or English
-3. Choose a style (Enhanced, Artistic, Anime, Photo)
-4. Select number of images to generate (1-4)
-5. Click "开始生成" (Start Generation)
+2. Choose your preferred AI model (Gemini or Doubao)
+3. Enter your description in Chinese or English
+4. Choose a style (Enhanced, Artistic, Anime, Photo)
+5. Select number of images to generate (1-4)
+6. Click "开始生成" (Start Generation)
 
 ### Image Editing
 1. Select "通过对话编辑图像" (Image Editing mode)
-2. Upload an image (PNG, JPG, WebP supported)
-3. Describe the changes you want to make
-4. Choose a style and generate
+2. Choose your preferred AI model (Gemini or Doubao)
+3. Upload an image (PNG, JPG, WebP supported)
+4. Describe the changes you want to make
+5. Choose a style and generate
 
 ### Example Prompts
 - **中文**: "一只可爱的橘猫坐在彩虹桥上，梦幻风格，柔和光线"
@@ -133,7 +146,8 @@ gemini-nano-banana/
 - `npm run start` - Start production server
 
 ### API Endpoints
-- `/api/gemini` - Main image generation API
+- `/api/gemini` - Gemini 2.5 Flash image generation API
+- `/api/doubao` - Doubao SeedReam 4.0 image generation API
 - `/api/generate` - Alternative generation endpoint
 - `/api/generate-demo` - Demo endpoint
 
@@ -142,8 +156,8 @@ gemini-nano-banana/
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `GEMINI_API_KEY` | Your Gemini API key from Google AI Studio | ✅ |
-| `MAYNOR_API_KEY` | Alternative API key (optional) | ❌ |
-| `MAYNOR_API_URL` | Alternative API URL (optional) | ❌ |
+| `MAYNOR_API_KEY` | Your Doubao API key from Volcano Engine | ✅ |
+| `MAYNOR_API_URL` | Doubao API base URL | ✅ |
 
 ## 🌟 UI Features
 

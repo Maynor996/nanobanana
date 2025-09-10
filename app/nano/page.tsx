@@ -7,16 +7,21 @@ import UserAuth from '../components/UserAuth'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
+type Model = 'gemini' | 'doubao'
 
 export default function NanoPage() {
   const [mode, setMode] = useState<Mode>('text')
   const [prompt, setPrompt] = useState('')
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const [style, setStyle] = useState<Style>('none')
   const [imageCount, setImageCount] = useState(1)
+  const [model, setModel] = useState<Model>('gemini')
+  const [imageSize, setImageSize] = useState<string>('1k')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [error, setError] = useState<string>('')
   const [userEmail, setUserEmail] = useState<string>('')
   const [userCredits, setUserCredits] = useState<number>(0)
   const [isUnlimited, setIsUnlimited] = useState(false)
@@ -34,6 +39,16 @@ export default function NanoPage() {
     { icon: '🌿', text: '自然', value: '自然生态' },
     { icon: '🐾', text: '动物', value: '可爱的动物' },
     { icon: '💡', text: '创意', value: '创意设计' }
+  ]
+
+  // 图像编辑专用快速风格
+  const editingQuickPrompts = [
+    { icon: '👗', text: '穿搭建议', value: '在原图基础上，用箭头和文字标注识别出的所有服装单品，并给出中文穿搭建议和评价，保持原图清晰可见' },
+    { icon: '✨', text: '美化增强', value: '增强图片细节，提高画质，保持原有风格' },
+    { icon: '🎭', text: '风格转换', value: '将图片转换为艺术风格，保持主要内容不变' },
+    { icon: '🌈', text: '色彩调整', value: '优化图片色彩，增强视觉效果，使画面更加生动' },
+    { icon: '📐', text: '构图优化', value: '优化图片构图，调整元素布局，使画面更加和谐' },
+    { icon: '🔍', text: '细节分析', value: '在原图基础上添加标注和说明文字，详细分析图片内容，指出关键元素和特征' }
   ]
 
   // 获取用户积分信息
@@ -75,7 +90,7 @@ export default function NanoPage() {
     setForceShowLogin(false) // 重置强制登录提示状态
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length > 0) {
       // 检查是否超过最大限制（最多10张图片）
@@ -87,15 +102,41 @@ export default function NanoPage() {
         return
       }
 
-      setImageFiles(prev => [...prev, ...files])
+      setIsUploading(true)
 
-      files.forEach(file => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setImagePreviews(prev => [...prev, reader.result as string])
-        }
-        reader.readAsDataURL(file)
-      })
+      try {
+        // 同步更新文件列表
+        const newImageFiles = [...imageFiles, ...files]
+        
+        // 批量处理所有文件的预览
+        const previewPromises = files.map(file => {
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader()
+            reader.onloadend = () => {
+              resolve(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+          })
+        })
+
+        // 等待所有预览完成后一次性更新状态
+        const newPreviews = await Promise.all(previewPromises)
+        
+        // 确保状态同步更新
+        setImageFiles(newImageFiles)
+        setImagePreviews(prev => [...prev, ...newPreviews])
+        
+        console.log('图片上传完成:', { 
+          newFilesCount: files.length, 
+          totalFiles: newImageFiles.length,
+          totalPreviews: imagePreviews.length + newPreviews.length
+        })
+      } catch (error) {
+        console.error('图片上传失败:', error)
+        alert('图片上传失败，请重试')
+      } finally {
+        setIsUploading(false)
+      }
     }
 
     // 重置input值以允许重新选择相同的文件
@@ -117,7 +158,7 @@ export default function NanoPage() {
     e.stopPropagation()
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
@@ -130,15 +171,41 @@ export default function NanoPage() {
         return
       }
 
-      setImageFiles(prev => [...prev, ...files])
+      setIsUploading(true)
 
-      files.forEach(file => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setImagePreviews(prev => [...prev, reader.result as string])
-        }
-        reader.readAsDataURL(file)
-      })
+      try {
+        // 同步更新文件列表
+        const newImageFiles = [...imageFiles, ...files]
+        
+        // 批量处理所有文件的预览
+        const previewPromises = files.map(file => {
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader()
+            reader.onloadend = () => {
+              resolve(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+          })
+        })
+
+        // 等待所有预览完成后一次性更新状态
+        const newPreviews = await Promise.all(previewPromises)
+        
+        // 确保状态同步更新
+        setImageFiles(newImageFiles)
+        setImagePreviews(prev => [...prev, ...newPreviews])
+        
+        console.log('拖拽上传完成:', { 
+          newFilesCount: files.length, 
+          totalFiles: newImageFiles.length,
+          totalPreviews: imagePreviews.length + newPreviews.length
+        })
+      } catch (error) {
+        console.error('拖拽上传失败:', error)
+        alert('图片上传失败，请重试')
+      } finally {
+        setIsUploading(false)
+      }
     } else {
       alert('请上传图片文件')
     }
@@ -213,7 +280,13 @@ export default function NanoPage() {
       return
     }
     if (mode === 'upload' && imageFiles.length === 0) {
+      console.log('图片检查失败:', { mode, imageFilesLength: imageFiles.length, imageFiles, isUploading })
       alert('请先上传图片')
+      return
+    }
+    
+    if (isUploading) {
+      alert('图片正在上传中，请稍候...')
       return
     }
 
@@ -226,6 +299,7 @@ export default function NanoPage() {
 
     setLoading(true)
     setResult(null)
+    setError('')
 
     try {
       let imageDataArray = null
@@ -243,7 +317,14 @@ export default function NanoPage() {
         finalPrompt = stylePrompt ? `${stylePrompt} ${prompt}` : prompt
       }
 
-      const apiEndpoint = mode === 'text' ? '/api/generate' : '/api/gemini'
+      // 根据选择的模型决定API端点
+      let apiEndpoint = '/api/gemini'
+      if (model === 'doubao') {
+        apiEndpoint = '/api/doubao'
+      } else if (model === 'gemini' && mode === 'text') {
+        apiEndpoint = '/api/generate'
+      }
+      
       const requestBody = mode === 'text'
         ? { prompt: finalPrompt }
         : { prompt: finalPrompt, imageDataArray }
@@ -252,6 +333,11 @@ export default function NanoPage() {
       const requestData: any = {
         ...requestBody,
         count: imageCount
+      }
+
+      // 如果是豆包模型，添加尺寸参数
+      if (model === 'doubao') {
+        requestData.size = imageSize
       }
 
       // 如果是注册用户，使用邮箱；如果是匿名用户，使用sessionId
@@ -267,7 +353,14 @@ export default function NanoPage() {
         body: JSON.stringify(requestData)
       })
 
-      const data = await response.json()
+      let data
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        console.error('JSON解析错误:', parseError)
+        alert(`API响应解析失败，请稍后重试。使用的模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+        return
+      }
 
       if (!response.ok) {
         if (response.status === 402) {
@@ -286,8 +379,17 @@ export default function NanoPage() {
         } else if (response.status === 401) {
           alert(data.error || '请先登录')
           return
+        } else if (response.status === 524) {
+          const errorMsg = `服务器响应超时，请稍后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
+          setError(errorMsg)
+          return
+        } else if (response.status === 500) {
+          const errorMsg = `服务器内部错误：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
+          setError(errorMsg)
+          return
         }
-        alert(data.error || '生成失败')
+        const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
+        setError(errorMsg)
         return
       } else {
         setResult(data)
@@ -298,8 +400,18 @@ export default function NanoPage() {
         // 匿名用户现在无限使用，不需要更新积分显示
       }
     } catch (err) {
-      alert('网络错误，请重试')
-      console.error(err)
+      console.error('请求错误:', err)
+      if (err instanceof Error) {
+        if (err.message.includes('fetch')) {
+          setError(`网络连接失败，请检查网络后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+        } else if (err.message.includes('timeout')) {
+          setError(`请求超时，请稍后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+        } else {
+          setError(`发生错误：${err.message}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+        }
+      } else {
+        setError(`未知错误，请重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -494,6 +606,83 @@ export default function NanoPage() {
         </button>
       </div>
 
+      {/* Model Selector */}
+      <div className="model-selector" style={{ display: 'flex', gap: '1rem', padding: '0 2rem 2rem', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <span style={{ color: '#888', fontSize: '0.9rem' }}>AI模型:</span>
+          <button
+            onClick={() => setModel('gemini')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: model === 'gemini'
+                ? 'linear-gradient(135deg, #6366f1, #4f46e5)'
+                : 'transparent',
+              border: model === 'gemini' ? 'none' : '1px solid #6366f1',
+              color: model === 'gemini' ? 'white' : '#6366f1',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              transition: 'all 0.3s ease',
+              boxShadow: model === 'gemini'
+                ? '0 4px 15px rgba(99, 102, 241, 0.3)'
+                : 'none'
+            }}
+          >
+            🤖 Gemini 2.5 Flash
+          </button>
+          <button
+            onClick={() => setModel('doubao')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: model === 'doubao'
+                ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                : 'transparent',
+              border: model === 'doubao' ? 'none' : '1px solid #f59e0b',
+              color: model === 'doubao' ? 'white' : '#f59e0b',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              transition: 'all 0.3s ease',
+              boxShadow: model === 'doubao'
+                ? '0 4px 15px rgba(245, 158, 11, 0.3)'
+                : 'none'
+            }}
+          >
+            🎨 豆包 SeedReam 4.0
+          </button>
+        </div>
+        
+        {/* Size Selector for Doubao */}
+        {model === 'doubao' && (
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ color: '#888', fontSize: '0.9rem' }}>尺寸:</span>
+            {['1k', '2k', '4k'].map((size) => (
+              <button
+                key={size}
+                onClick={() => setImageSize(size)}
+                style={{
+                  padding: '0.4rem 0.8rem',
+                  background: imageSize === size
+                    ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                    : 'transparent',
+                  border: imageSize === size ? 'none' : '1px solid #f59e0b',
+                  color: imageSize === size ? 'white' : '#f59e0b',
+                  borderRadius: '0.4rem',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  transition: 'all 0.3s ease',
+                  boxShadow: imageSize === size
+                    ? '0 2px 8px rgba(245, 158, 11, 0.3)'
+                    : 'none'
+                }}
+              >
+                {size.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Main Content */}
       <div className="main-content" style={{ display: 'flex', gap: '2rem', padding: '0 2rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Left Panel */}
@@ -522,7 +711,15 @@ export default function NanoPage() {
                 }
               }}
             >
-              {imagePreviews.length > 0 ? (
+              {isUploading ? (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📤</div>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#10b981' }}>
+                    正在上传图片...
+                  </h3>
+                  <p style={{ color: '#888' }}>请稍候，正在处理您的图片</p>
+                </div>
+              ) : imagePreviews.length > 0 ? (
                 <div>
                   <div className="image-grid" style={{
                     display: 'grid',
@@ -706,13 +903,13 @@ export default function NanoPage() {
                   alignItems: 'center',
                   gap: '0.5rem'
                 }}>
-                  ⚡ 灵感启发
+                  {mode === 'upload' ? '🎨 编辑风格' : '⚡ 灵感启发'}
                 </h3>
                 <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                  点击下方标签快速开始创作
+                  {mode === 'upload' ? '选择编辑方式快速处理图片' : '点击下方标签快速开始创作'}
                 </p>
                 <div className="quick-prompts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  {quickPrompts.map((item, index) => (
+                  {(mode === 'upload' ? editingQuickPrompts : quickPrompts).map((item, index) => (
                     <button
                       className="quick-prompt-button"
                       key={index}
@@ -811,6 +1008,75 @@ export default function NanoPage() {
                     {prompt.length}/5000
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Editing Styles for Upload Mode */}
+          {mode === 'upload' && (
+            <div style={{
+              background: 'linear-gradient(135deg, #111111, #1a1a1a)',
+              borderRadius: '1.5rem',
+              padding: '1.5rem',
+              marginTop: '1rem',
+              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)',
+              border: '1px solid rgba(16, 185, 129, 0.1)'
+            }}>
+              <h3 style={{ 
+                fontSize: '1.1rem', 
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                🎨 编辑风格
+              </h3>
+              <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                选择编辑方式快速处理图片
+              </p>
+
+              <div className="quick-prompts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem' }}>
+                {editingQuickPrompts.map((item, index) => (
+                  <button
+                    className="quick-prompt-button"
+                    key={index}
+                    onClick={() => setPrompt(item.value)}
+                    style={{
+                      padding: '0.75rem 0.5rem',
+                      backgroundColor: 'transparent',
+                      border: '1px solid #333',
+                      borderRadius: '0.75rem',
+                      color: '#888',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      fontSize: '0.8rem',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      textAlign: 'center'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#10b981'
+                      e.currentTarget.style.color = '#10b981'
+                      e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.05)'
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.15)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#333'
+                      e.currentTarget.style.color = '#888'
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.transform = 'none'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
+                    <span>{item.text}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -1113,11 +1379,11 @@ export default function NanoPage() {
             <button
               className={`generate-button ${loading ? 'loading' : 'button-glow'}`}
               onClick={handleGenerate}
-              disabled={loading || !sessionId}
+              disabled={loading || !sessionId || isUploading}
               style={{
                 width: '100%',
                 padding: '1rem',
-                background: loading
+                background: (loading || isUploading)
                   ? 'linear-gradient(135deg, #6b7280, #4b5563)'
                   : 'linear-gradient(135deg, #10b981, #059669)',
                 color: 'white',
@@ -1125,7 +1391,7 @@ export default function NanoPage() {
                 borderRadius: '0.75rem',
                 fontSize: '1rem',
                 fontWeight: 'bold',
-                cursor: loading ? 'not-allowed' : 'pointer',
+                cursor: (loading || isUploading) ? 'not-allowed' : 'pointer',
                 opacity: 1,
                 display: 'flex',
                 alignItems: 'center',
@@ -1154,9 +1420,13 @@ export default function NanoPage() {
                 <>
                   <span className="rotating">⚙️</span> 生成中...
                 </>
+              ) : isUploading ? (
+                <>
+                  <span className="rotating">📤</span> 上传中...
+                </>
               ) : (
                 <>
-                                    🎨 {isAnonymous ? '免费生成' : '开始生成'} ({imageCount} 张)
+                  🎨 {isAnonymous ? '免费生成' : '开始生成'} ({imageCount} 张)
                   <span style={{
                     backgroundColor: 'rgba(255,255,255,0.2)',
                     padding: '0.25rem 0.5rem',
@@ -1180,6 +1450,46 @@ export default function NanoPage() {
           </div>
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="error-section" style={{
+          padding: '2rem',
+          maxWidth: '1400px',
+          margin: '0 auto'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+            borderRadius: '1rem',
+            padding: '1.5rem',
+            textAlign: 'center',
+            border: '1px solid #ef4444'
+          }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>❌</div>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'white' }}>
+              生成失败
+            </h3>
+            <p style={{ color: '#fecaca', fontSize: '0.9rem', lineHeight: '1.5' }}>
+              {error}
+            </p>
+            <button
+              onClick={() => setError('')}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Result Display */}
       {result && (

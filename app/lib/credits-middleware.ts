@@ -42,7 +42,19 @@ export async function withCreditsCheck(
       }, { status: 402 })
     }
 
-    // 扣除积分
+    // 匿名用户无限使用，跳过积分检查
+    if (isAnonymous) {
+      // 直接处理请求，不扣除积分
+      const response = await handler(request, userEmail)
+      const responseData = await response.json()
+      return NextResponse.json({
+        ...responseData,
+        remainingCredits: 999,
+        creditsDeducted: 0
+      })
+    }
+
+    // 对于注册用户，扣除积分
     const deductionResult = deductUserCredits(userEmail, CREDITS_PER_GENERATION)
 
     if (!deductionResult.success) {
@@ -57,20 +69,11 @@ export async function withCreditsCheck(
 
     // 在响应中添加剩余积分信息
     const responseData = await response.json()
-    if (isAnonymous) {
-      // 匿名用户无限使用，不显示积分消耗
-      return NextResponse.json({
-        ...responseData,
-        remainingCredits: 999,
-        creditsDeducted: 0
-      })
-    } else {
-      return NextResponse.json({
-        ...responseData,
-        remainingCredits: deductionResult.remainingCredits,
-        creditsDeducted: CREDITS_PER_GENERATION
-      })
-    }
+    return NextResponse.json({
+      ...responseData,
+      remainingCredits: deductionResult.remainingCredits,
+      creditsDeducted: CREDITS_PER_GENERATION
+    })
 
   } catch (error) {
     console.error('积分验证失败:', error)

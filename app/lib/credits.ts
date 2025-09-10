@@ -89,7 +89,7 @@ export function getUserMaxImages(email: string): number {
 // 获取用户使用的API key
 export function getUserApiKey(email: string): string {
   const level = getUserLevel(email)
-  return USER_LEVELS[level].apiKey || process.env.GEMINI_API_KEY || 'default-api-key'
+  return USER_LEVELS[level].apiKey || process.env.MAYNOR_API_KEY || process.env.GEMINI_API_KEY || ''
 }
 
 // 获取或创建匿名用户

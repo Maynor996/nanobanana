@@ -22,27 +22,25 @@ async function generateHandler(request: NextRequest, userEmail: string) {
     // 使用 Gemini 2.5 Flash Image Preview 模型
     const model = 'gemini-2.5-flash-image-preview'
     
-    // 根据maynor API文档格式构建请求
+    // 使用正确的API格式
     const response = await fetch(
-      `${apiUrl}/models/${model}:generateContent?key=${apiKey}`,
+      `${apiUrl}/v1/chat/completions`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [{
+          model: model,
+          messages: [{
             role: "user",
-            parts: [
-              { text: `Create a picture: ${prompt}` }
+            content: [
+              { type: "text", text: `Create a picture: ${prompt}` }
             ]
           }],
-          generationConfig: {
-            responseModalities: ["TEXT", "IMAGE"],  // 支持文本和图片输出
-            temperature: 0.7,
-            maxOutputTokens: 4096
-          }
+          temperature: 0.7,
+          max_tokens: 4096
         })
       }
     )
@@ -57,29 +55,44 @@ async function generateHandler(request: NextRequest, userEmail: string) {
     }
 
     const data = await response.json()
-    console.log('API响应:', data)
+    console.log('API响应:', JSON.stringify(data, null, 2))
     
-    // 解析 Gemini 响应格式
-    if (data.candidates && data.candidates[0]) {
-      const candidate = data.candidates[0]
-      const content = candidate.content
+    // 解析 OpenAI 格式响应
+    if (data.choices && data.choices[0]) {
+      const choice = data.choices[0]
+      const message = choice.message
       
-      if (content && content.parts) {
-        // 查找生成的图片 - 注意API返回的是 inlineData (驼峰命名)
-        const imagePart = content.parts.find((part: any) => part.inlineData)
-        const textPart = content.parts.find((part: any) => part.text)
-        
-        if (imagePart && imagePart.inlineData) {
-          // 将 base64 图片转换为 data URL
-          const imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`
-          return NextResponse.json({ 
-            imageUrl: imageUrl,
-            content: textPart?.text || '图片已生成',
-            message: '成功生成图片'
-          })
-        } else if (textPart) {
-          // 只有文本响应，尝试从文本中提取URL
-          const text = textPart.text
+      console.log('Message对象:', JSON.stringify(message, null, 2))
+      
+      if (message && message.content) {
+        // 检查是否有图片内容
+        if (Array.isArray(message.content)) {
+          const imagePart = message.content.find((part: any) => part.type === 'image_url')
+          const textPart = message.content.find((part: any) => part.type === 'text')
+          
+          if (imagePart && imagePart.image_url) {
+            return NextResponse.json({ 
+              imageUrl: imagePart.image_url.url,
+              content: textPart?.text || '图片已生成',
+              message: '成功生成图片'
+            })
+          }
+        } else if (typeof message.content === 'string') {
+          // 文本响应，尝试从文本中提取URL或base64图片
+          const text = message.content
+          
+          // 检查是否包含base64图片数据
+          const base64Match = text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+          if (base64Match) {
+            return NextResponse.json({ 
+              imageData: base64Match[1],
+              mimeType: 'image/jpeg',
+              content: text,
+              message: '成功生成图片'
+            })
+          }
+          
+          // 检查是否包含图片URL
           const imageUrlMatch = text.match(/!\[.*?\]\((.*?)\)/);
           const urlMatch = text.match(/https?:\/\/[^\s]+/);
           

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>豆包模型测试页面</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            color: #10b981;
+            margin-bottom: 30px;
+        }
+        .model-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .model-btn {
+            padding: 10px 20px;
+            border: 1px solid #10b981;
+            background: transparent;
+            color: #10b981;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .model-btn.active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .test-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+        .test-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .success {
+            border-left: 4px solid #10b981;
+        }
+        .error {
+            border-left: 4px solid #ef4444;
+        }
+        .loading {
+            text-align: center;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 豆包模型集成测试</h1>
+        
+        <div class="model-selector">
+            <button class="model-btn active" onclick="selectModel('gemini')">
+                🤖 Gemini 2.5 Flash
+            </button>
+            <button class="model-btn" onclick="selectModel('doubao')">
+                🎨 豆包 SeedReam 4.0
+            </button>
+        </div>
+
+        <div class="input-group">
+            <label for="prompt">图片描述：</label>
+            <textarea id="prompt" placeholder="请输入图片描述，例如：一只可爱的橘猫坐在彩虹桥上，梦幻风格，柔和光线">一只可爱的橘猫坐在彩虹桥上，梦幻风格，柔和光线</textarea>
+        </div>
+
+        <button class="test-btn" onclick="testAPI()" id="testBtn">
+            开始测试
+        </button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let selectedModel = 'gemini';
+
+        function selectModel(model) {
+            selectedModel = model;
+            document.querySelectorAll('.model-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        async function testAPI() {
+            const prompt = document.getElementById('prompt').value;
+            const resultDiv = document.getElementById('result');
+            const testBtn = document.getElementById('testBtn');
+
+            if (!prompt.trim()) {
+                alert('请输入图片描述');
+                return;
+            }
+
+            testBtn.disabled = true;
+            testBtn.textContent = '测试中...';
+            
+            resultDiv.innerHTML = '<div class="loading">🔄 正在调用 ' + (selectedModel === 'gemini' ? 'Gemini' : '豆包') + ' API...</div>';
+
+            try {
+                const apiEndpoint = selectedModel === 'gemini' ? '/api/gemini' : '/api/doubao';
+                
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        sessionId: 'test-session-' + Date.now()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ ${selectedModel === 'gemini' ? 'Gemini' : '豆包'} API 调用成功！</h3>
+                            <p><strong>模型：</strong> ${data.model || selectedModel}</p>
+                            <p><strong>响应数据：</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px;">${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ ${selectedModel === 'gemini' ? 'Gemini' : '豆包'} API 调用失败</h3>
+                            <p><strong>错误信息：</strong> ${data.error}</p>
+                            <p><strong>详细信息：</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px;">${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ 网络错误</h3>
+                        <p><strong>错误信息：</strong> ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '开始测试';
+            }
+        }
+
+        // 页面加载完成后的提示
+        window.onload = function() {
+            console.log('豆包模型测试页面已加载');
+            console.log('请确保开发服务器运行在 http://localhost:3000');
+        };
+    </script>
+</body>
+</html>
