@@ -1,5 +1,8 @@
+// @ts-ignore
 import nodemailer from 'nodemailer'
+// @ts-ignore
 import Mail from 'nodemailer/lib/mailer'
+// @ts-ignore
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
 
 // 创建邮件发送器

@@ -58,7 +58,7 @@ async function doubaoHandler(request: NextRequest, userEmail: string) {
     })
 
     // 添加重试机制
-    let response: Response
+    let response: Response | null = null
     let lastError: any = null
     const maxRetries = 2
     
@@ -99,7 +99,7 @@ async function doubaoHandler(request: NextRequest, userEmail: string) {
     }
 
     // 检查最终响应
-    if (!response! || !response.ok) {
+    if (!response || !response.ok) {
       let errorData: any = {}
       try {
         if (response) {

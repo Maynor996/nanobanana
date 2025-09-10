@@ -903,13 +903,13 @@ export default function NanoPage() {
                   alignItems: 'center',
                   gap: '0.5rem'
                 }}>
-                  {mode === 'upload' ? '🎨 编辑风格' : '⚡ 灵感启发'}
+                  ⚡ 灵感启发
                 </h3>
                 <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                  {mode === 'upload' ? '选择编辑方式快速处理图片' : '点击下方标签快速开始创作'}
+                  点击下方标签快速开始创作
                 </p>
                 <div className="quick-prompts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  {(mode === 'upload' ? editingQuickPrompts : quickPrompts).map((item, index) => (
+                  {quickPrompts.map((item, index) => (
                     <button
                       className="quick-prompt-button"
                       key={index}

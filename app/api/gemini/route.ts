@@ -52,7 +52,7 @@ async function geminiHandler(request: NextRequest, userEmail: string) {
     // 构建OpenAI兼容格式的消息
     const messages = [{
       role: "user",
-      content: []
+      content: [] as any[]
     }]
 
     // 添加文本内容
