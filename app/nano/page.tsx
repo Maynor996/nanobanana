@@ -44,14 +44,16 @@ export default function NanoPage() {
     { icon: '💡', text: '创意', value: '创意设计' }
   ]
 
-  // 图像编辑专用快速风格
+  // 图像编辑专用快速操作
   const editingQuickPrompts = [
-    { icon: '👗', text: '穿搭建议', value: '在原图基础上，用箭头和文字标注识别出的所有服装单品，并给出中文穿搭建议和评价，保持原图清晰可见' },
-    { icon: '✨', text: '美化增强', value: '增强图片细节，提高画质，保持原有风格' },
-    { icon: '🎭', text: '风格转换', value: '将图片转换为艺术风格，保持主要内容不变' },
-    { icon: '🌈', text: '色彩调整', value: '优化图片色彩，增强视觉效果，使画面更加生动' },
-    { icon: '📐', text: '构图优化', value: '优化图片构图，调整元素布局，使画面更加和谐' },
-    { icon: '🔍', text: '细节分析', value: '在原图基础上添加标注和说明文字，详细分析图片内容，指出关键元素和特征' }
+    { icon: '✨', text: '智能美化', value: '智能美化图片，增强细节，提高画质，保持原有风格和色调' },
+    { icon: '🎭', text: '风格转换', value: '将图片转换为艺术风格，如油画、水彩或素描效果，保持主要内容不变' },
+    { icon: '🐛', text: '添加元素', value: '请为这张图片添加一个可爱的小动物在合适的位置，保持原图的风格和色调' },
+    { icon: '🌈', text: '色彩优化', value: '优化图片色彩饱和度和对比度，使画面更加生动明亮' },
+    { icon: '🌅', text: '光影增强', value: '优化图片的光影效果，增强层次感和立体感，使画面更有深度' },
+    { icon: '🔧', text: '智能修复', value: '修复图片中的瑕疵和噪点，优化整体视觉效果' },
+    { icon: '👗', text: '穿搭分析', value: '分析图片中的服装搭配，在原图基础上添加标注和建议' },
+    { icon: '🔍', text: '详细分析', value: '在原图基础上添加详细的标注说明，分析图片内容和关键元素' }
   ]
 
   // 获取用户积分信息
@@ -436,6 +438,49 @@ export default function NanoPage() {
       photo: '写实照片，真实感'
     }
     return styles[style]
+  }
+
+  // 下载图片
+  const downloadImage = (imageData: string, mimeType: string = 'image/png') => {
+    const link = document.createElement('a')
+    link.href = `data:${mimeType};base64,${imageData}`
+    link.download = `generated-${Date.now()}.${mimeType.split('/')[1]}`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  // 分享图片
+  const shareImage = async (imageData: string, mimeType: string = 'image/png') => {
+    if (navigator.share && navigator.canShare) {
+      try {
+        const blob = await (await fetch(`data:${mimeType};base64,${imageData}`)).blob()
+        const file = new File([blob], `generated-${Date.now()}.${mimeType.split('/')[1]}`, { type: mimeType })
+        
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'AI生成的图片',
+            text: '查看这张AI生成的图片'
+          })
+        }
+      } catch (error) {
+        console.error('分享失败:', error)
+        // 降级到复制链接
+        copyToClipboard(`data:${mimeType};base64,${imageData}`)
+      }
+    } else {
+      // 降级到复制链接
+      copyToClipboard(`data:${mimeType};base64,${imageData}`)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      showError('提示', '图片链接已复制到剪贴板')
+    }).catch(() => {
+      showError('提示', '复制失败，请手动复制')
+    })
   }
 
   return (

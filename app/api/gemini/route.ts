@@ -74,23 +74,51 @@ async function geminiHandler(request: NextRequest, userEmail: string) {
       messages[0].content.push({ type: "text", text: `Create a picture: ${prompt}` })
     }
 
-    // 使用正确的API格式
-    const response = await fetch(
-      `${apiUrl}/v1/chat/completions`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: messages,
-          temperature: 0.7,
-          max_tokens: 4096
-        })
-      }
-    )
+    // 根据是否有图片选择合适的API格式
+    let response: Response
+    
+    if (imageData || (imageDataArray && imageDataArray.length > 0)) {
+      // 图片编辑使用 Gemini 原生格式
+      response = await fetch(
+        `${apiUrl}/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
+          body: JSON.stringify({
+            contents: [{
+              role: "user",
+              parts: parts
+            }],
+            generationConfig: {
+              responseModalities: ["TEXT", "IMAGE"],
+              temperature: 0.7,
+              maxOutputTokens: 1000
+            }
+          })
+        }
+      )
+    } else {
+      // 文生图使用 OpenAI 兼容格式
+      response = await fetch(
+        `${apiUrl}/v1/chat/completions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: messages,
+            temperature: 0.7,
+            max_tokens: 4096
+          })
+        }
+      )
+    }
 
     if (!response.ok) {
       const errorData = await response.json()
@@ -104,39 +132,67 @@ async function geminiHandler(request: NextRequest, userEmail: string) {
     const data = await response.json()
     console.log('Gemini API响应:', JSON.stringify(data, null, 2))
     
-    // 解析 OpenAI 格式响应
-    if (data.choices && data.choices[0]) {
-      const choice = data.choices[0]
-      const message = choice.message
-      
-      if (message && message.content) {
-        if (Array.isArray(message.content)) {
-          // 多部分内容
-          const imagePart = message.content.find((part: any) => part.type === 'image_url')
-          const textPart = message.content.find((part: any) => part.type === 'text')
+    // 根据请求类型解析不同格式的响应
+    if (imageData || (imageDataArray && imageDataArray.length > 0)) {
+      // 解析 Gemini 原生格式响应
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        const content = data.candidates[0].content
+        
+        if (content.parts) {
+          const imagePart = content.parts.find((part: any) => part.inlineData || part.inline_data)
+          const textPart = content.parts.find((part: any) => part.text)
           
-          if (imagePart && imagePart.image_url) {
+          if (imagePart) {
+            const imageData = imagePart.inlineData || imagePart.inline_data
             return NextResponse.json({ 
-              imageUrl: imagePart.image_url.url,
-              text: textPart?.text || '图片已生成'
+              imageData: imageData.data,
+              mimeType: imageData.mimeType || imageData.mime_type || 'image/png',
+              text: textPart?.text || '图片编辑已完成',
+              success: true
+            })
+          } else if (textPart) {
+            return NextResponse.json({ 
+              text: textPart.text,
+              message: '模型返回了文本响应，但没有生成图片'
             })
           }
-        } else if (typeof message.content === 'string') {
-          // 文本内容，检查是否包含base64图片
-          const text = message.content
-          const base64Match = text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
-          
-          if (base64Match) {
-            return NextResponse.json({ 
-              imageData: base64Match[1],
-              mimeType: 'image/jpeg',
-              text: text
-            })
-          } else {
-            return NextResponse.json({ 
-              text: text,
-              message: '模型返回了文本响应'
-            })
+        }
+      }
+    } else {
+      // 解析 OpenAI 格式响应
+      if (data.choices && data.choices[0]) {
+        const choice = data.choices[0]
+        const message = choice.message
+        
+        if (message && message.content) {
+          if (Array.isArray(message.content)) {
+            // 多部分内容
+            const imagePart = message.content.find((part: any) => part.type === 'image_url')
+            const textPart = message.content.find((part: any) => part.type === 'text')
+            
+            if (imagePart && imagePart.image_url) {
+              return NextResponse.json({ 
+                imageUrl: imagePart.image_url.url,
+                text: textPart?.text || '图片已生成'
+              })
+            }
+          } else if (typeof message.content === 'string') {
+            // 文本内容，检查是否包含base64图片
+            const text = message.content
+            const base64Match = text.match(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+            
+            if (base64Match) {
+              return NextResponse.json({ 
+                imageData: base64Match[1],
+                mimeType: 'image/jpeg',
+                text: text
+              })
+            } else {
+              return NextResponse.json({ 
+                text: text,
+                message: '模型返回了文本响应'
+              })
+            }
           }
         }
       }
