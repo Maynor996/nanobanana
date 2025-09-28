@@ -1,0 +1,113 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # 热身阶段 - 5分钟缓慢增长
+    - duration: 300
+      arrivalRate: 1
+      rampTo: 5
+      name: "Warm up"
+    
+    # 正常负载测试 - 5分钟稳定负载
+    - duration: 300
+      arrivalRate: 5
+      name: "Normal load"
+    
+    # 峰值负载测试 - 3分钟高负载
+    - duration: 180
+      arrivalRate: 10
+      rampTo: 20
+      name: "Peak load"
+    
+    # 压力测试 - 2分钟极限负载
+    - duration: 120
+      arrivalRate: 20
+      rampTo: 50
+      name: "Stress test"
+
+  # 性能指标阈值
+  expect:
+    - statusCode: [200, 201, 400, 401]
+    - contentType: json
+    - maxResponseTime: 30000  # 30秒超时（AI API较慢）
+
+scenarios:
+  # 文生图API测试
+  - name: "Text to Image Generation"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/generate"
+          headers:
+            Content-Type: "application/json"
+          json:
+            prompt: "A beautiful sunset over mountains"
+          capture:
+            - json: "$.imageData"
+              as: "imageResult"
+          think: 2
+
+  # Gemini图像编辑测试
+  - name: "Gemini Image Editing"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/gemini"
+          headers:
+            Content-Type: "application/json"
+          json:
+            prompt: "Add a rainbow to this landscape"
+            imageData: "{{ $randomString() }}"  # 模拟base64数据
+          think: 3
+
+  # Doubao图像生成测试
+  - name: "Doubao Image Generation"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/doubao"
+          headers:
+            Content-Type: "application/json"
+          json:
+            prompt: "Generate a futuristic cityscape"
+            size: "1k"
+            guidance_scale: 5.5
+          think: 5
+
+  # 用户认证流程测试
+  - name: "User Authentication Flow"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/send-verification"
+          headers:
+            Content-Type: "application/json"
+          json:
+            email: "test{{ $randomInt(1, 1000) }}@example.com"
+      - think: 1
+      - post:
+          url: "/api/auth/verify-code"
+          headers:
+            Content-Type: "application/json"
+          json:
+            email: "test{{ $randomInt(1, 1000) }}@example.com"
+            code: "123456"
+
+  # 积分查询测试
+  - name: "Credits Check"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/user/credits"
+          headers:
+            Authorization: "Bearer mock-token"
+
+# 插件配置
+plugins:
+  expect: {}
+  metrics-by-endpoint: {}
+  
+# 报告配置
+report:
+  output: 
+    - json
+    - html

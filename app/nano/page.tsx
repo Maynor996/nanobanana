@@ -370,7 +370,7 @@ export default function NanoPage() {
         data = await response.json()
       } catch (parseError) {
         console.error('JSON解析错误:', parseError)
-        showError('API解析错误', `API响应解析失败，请稍后重试。使用的模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+        showError('API解析错误', `API响应解析失败，请稍后重试。使用的模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
         return
       }
 
@@ -392,15 +392,15 @@ export default function NanoPage() {
           showError('登录提示', data.error || '请先登录')
           return
         } else if (response.status === 524) {
-          const errorMsg = `服务器响应超时，请稍后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
+          const errorMsg = `服务器响应超时，请稍后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
           showError('服务器超时', errorMsg)
           return
         } else if (response.status === 500) {
-          const errorMsg = `服务器内部错误：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
+          const errorMsg = `服务器内部错误：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
           showError('服务器超时', errorMsg)
           return
         }
-        const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`
+        const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
         showError('生成失败', errorMsg)
         return
       } else {
@@ -415,14 +415,14 @@ export default function NanoPage() {
       console.error('请求错误:', err)
       if (err instanceof Error) {
         if (err.message.includes('fetch')) {
-          showError('网络错误', `网络连接失败，请检查网络后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+          showError('网络错误', `网络连接失败，请检查网络后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
         } else if (err.message.includes('timeout')) {
-          showError('请求超时', `请求超时，请稍后重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+          showError('请求超时', `请求超时，请稍后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
         } else {
-          showError('发生错误', `发生错误：${err.message}。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+          showError('发生错误', `发生错误：${err.message}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
         }
       } else {
-        showError('未知错误', `未知错误，请重试。模型：${model === 'doubao' ? '豆包 SeedReam 4.0' : 'Gemini 2.5 Flash'}`)
+        showError('未知错误', `未知错误，请重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
       }
     } finally {
       setLoading(false)
@@ -686,24 +686,23 @@ export default function NanoPage() {
             🤖 Gemini 2.5 Flash
           </button>
           <button
-            onClick={() => setModel('doubao')}
+            onClick={() => {
+              showError('功能提示', '豆包模型功能正在开发中，敬请期待！目前请使用 Gemini 2.5 Flash 模型。')
+            }}
             style={{
               padding: '0.5rem 1rem',
-              background: model === 'doubao'
-                ? 'linear-gradient(135deg, #f59e0b, #d97706)'
-                : 'transparent',
-              border: model === 'doubao' ? 'none' : '1px solid #f59e0b',
-              color: model === 'doubao' ? 'white' : '#f59e0b',
+              background: '#666',
+              border: '1px solid #555',
+              color: '#ccc',
               borderRadius: '0.5rem',
-              cursor: 'pointer',
+              cursor: 'not-allowed',
               fontSize: '0.9rem',
               transition: 'all 0.3s ease',
-              boxShadow: model === 'doubao'
-                ? '0 4px 15px rgba(245, 158, 11, 0.3)'
-                : 'none'
+              opacity: 0.6
             }}
+            disabled
           >
-            🎨 豆包 SeedReam 4.0
+            🚧 豆包模型(待开发)
           </button>
         </div>
         
