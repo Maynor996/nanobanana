@@ -848,30 +848,25 @@ export default function EnhancedNanoPage() {
               
               {isAnonymous ? (
                 <AnonymousUser
-                  onCreditsUpdate={() => {}}
-                  onSessionUpdate={(sessionId, credits) => {
+                  onSessionReady={(sessionId) => {
                     setSessionId(sessionId)
-                    setUserCredits(credits)
                   }}
+                  forceShowLogin={forceShowLogin}
+                  onLoginComplete={() => setShowLoginModal(false)}
                 />
               ) : (
                 <UserAuth
-                  onLogin={(email, credits, unlimited) => {
+                  onAuth={(email) => {
                     setUserEmail(email)
-                    setUserCredits(credits)
-                    setIsUnlimited(unlimited)
                     setIsAnonymous(false)
                     setShowLoginModal(false)
                   }}
-                  onLogout={() => {
-                    setUserEmail('')
-                    setUserCredits(0)
-                    setIsUnlimited(false)
-                    setIsAnonymous(true)
-                    setSessionId('')
+                  onCreditsUpdate={(credits, unlimited) => {
+                    setUserCredits(credits)
+                    setIsUnlimited(unlimited)
                   }}
-                  isLoggedIn={!isAnonymous}
-                  userEmail={userEmail}
+                  hideTrigger={true}
+                  onClose={() => setShowLoginModal(false)}
                 />
               )}
             </div>
