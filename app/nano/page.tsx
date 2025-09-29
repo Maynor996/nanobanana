@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import './nano.css'
-import { BannerAd, RectangleAd, ResponsiveAd } from '../components/GoogleAds'
+import { BannerAd, ResponsiveAd } from '../components/GoogleAds'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
@@ -1070,10 +1070,6 @@ export default function NanoPage() {
 
         {/* Right Panel - AI Options */}
         <div className="right-panel" style={{ width: '350px' }}>
-          {/* 右侧矩形广告 */}
-          <div style={{ marginBottom: '1rem' }}>
-            <RectangleAd style={{ width: '100%' }} />
-          </div>
           
           <div style={{
             background: 'linear-gradient(135deg, #111111, #1a1a1a)',
