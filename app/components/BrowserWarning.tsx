@@ -3,30 +3,31 @@
 import { useState, useEffect } from 'react'
 import { detectBrowser, getBrowserWarningText, type BrowserInfo } from '../utils/browserDetection'
 
-interface BrowserWarningProps {
-  onClose?: () => void;
-  showCloseButton?: boolean;
-}
-
-export default function BrowserWarning({ onClose, showCloseButton = true }: BrowserWarningProps) {
+export default function BrowserWarning() {
   const [browserInfo, setBrowserInfo] = useState<BrowserInfo | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const info = detectBrowser();
     setBrowserInfo(info);
     
+    // 如果在应用内浏览器，禁用页面滚动和交互
     if (info.isInApp) {
-      setIsVisible(true);
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
     }
+    
+    return () => {
+      // 清理时恢复页面
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    };
   }, []);
 
-  const handleClose = () => {
-    setIsVisible(false);
-    onClose?.();
-  };
-
-  if (!browserInfo?.isInApp || !isVisible) {
+  if (!browserInfo?.isInApp) {
     return null;
   }
 
@@ -72,7 +73,7 @@ export default function BrowserWarning({ onClose, showCloseButton = true }: Brow
           fontWeight: 'bold',
           marginBottom: '1rem'
         }}>
-          浏览器兼容性提示
+          🚫 访问受限
         </h2>
 
         {/* 提示内容 */}
@@ -82,8 +83,33 @@ export default function BrowserWarning({ onClose, showCloseButton = true }: Brow
           lineHeight: '1.6',
           marginBottom: '2rem'
         }}>
-          {warningText}
+          {browserInfo.isWeChat ? '检测到您正在微信中访问，必须在浏览器中打开才能使用本服务' : '检测到您正在QQ中访问，必须在浏览器中打开才能使用本服务'}
         </p>
+        
+        {/* 强制提示 */}
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.2)',
+          borderRadius: '0.75rem',
+          padding: '1rem',
+          marginBottom: '2rem',
+          border: '2px solid #ef4444'
+        }}>
+          <p style={{
+            color: '#ef4444',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            margin: 0
+          }}>
+            ⛔ 该页面无法在应用内浏览器中正常工作
+          </p>
+          <p style={{
+            color: '#fca5a5',
+            fontSize: '0.9rem',
+            margin: '0.5rem 0 0 0'
+          }}>
+            为确保功能完整性，请按以下步骤在浏览器中打开
+          </p>
+        </div>
 
         {/* 操作步骤 */}
         <div style={{
@@ -133,7 +159,7 @@ export default function BrowserWarning({ onClose, showCloseButton = true }: Brow
             marginBottom: '0.75rem',
             fontWeight: 'bold'
           }}>
-            🚀 为什么需要在浏览器中打开？
+            🔒 功能受限原因
           </h4>
           <ul style={{
             textAlign: 'left',
@@ -142,37 +168,29 @@ export default function BrowserWarning({ onClose, showCloseButton = true }: Brow
             margin: 0,
             paddingLeft: '1.2rem'
           }}>
-            <li style={{ marginBottom: '0.3rem' }}>获得完整的功能体验</li>
-            <li style={{ marginBottom: '0.3rem' }}>支持文件上传和下载</li>
-            <li style={{ marginBottom: '0.3rem' }}>更好的页面渲染效果</li>
-            <li>避免功能限制和兼容性问题</li>
+            <li style={{ marginBottom: '0.3rem' }}>AI图像生成需要完整的API支持</li>
+            <li style={{ marginBottom: '0.3rem' }}>文件上传功能在应用内受限</li>
+            <li style={{ marginBottom: '0.3rem' }}>某些JavaScript功能被禁用</li>
+            <li>页面渲染可能出现异常</li>
           </ul>
         </div>
-
-        {/* 关闭按钮 */}
-        {showCloseButton && (
-          <button
-            onClick={handleClose}
-            style={{
-              background: 'linear-gradient(135deg, #6b7280, #4b5563)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0.75rem',
-              padding: '0.75rem 1.5rem',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #4b5563, #374151)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
-            }}
-          >
-            我知道了，继续访问
-          </button>
-        )}
+        
+        {/* 无法关闭提示 */}
+        <div style={{
+          background: 'rgba(55, 65, 81, 0.5)',
+          borderRadius: '0.75rem',
+          padding: '1rem',
+          border: '1px solid #4b5563'
+        }}>
+          <p style={{
+            color: '#9ca3af',
+            fontSize: '0.9rem',
+            margin: 0,
+            fontStyle: 'italic'
+          }}>
+            💡 此提示无法关闭，请按上述步骤在浏览器中打开
+          </p>
+        </div>
       </div>
 
       <style jsx>{`
