@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import './nano.css'
 import { BannerAd, ResponsiveAd } from '../components/GoogleAds'
+import BrowserWarning from '../components/BrowserWarning'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
@@ -406,6 +407,8 @@ export default function NanoPage() {
       color: '#ffffff',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
+      {/* 浏览器兼容性警告 */}
+      <BrowserWarning />
       {/* Header */}
       <header style={{
         display: 'flex',
