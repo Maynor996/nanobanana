@@ -23,8 +23,20 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const adsenseId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID
+  
   return (
     <html lang="zh">
+      <head>
+        {/* Google AdSense 脚本 */}
+        {adsenseId && adsenseId !== 'ca-pub-xxxxxxxxxxxxxxxxx' && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
+            crossOrigin="anonymous"
+          />
+        )}
+      </head>
       <body style={{ margin: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         {children}
       </body>

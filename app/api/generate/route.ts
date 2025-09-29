@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withCreditsCheck } from '../../lib/credits-middleware'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-async function generateHandler(request: NextRequest, userEmail: string) {
+async function generateHandler(request: NextRequest) {
   try {
     const { prompt } = await request.json()
     
@@ -145,5 +144,5 @@ async function generateHandler(request: NextRequest, userEmail: string) {
 }
 
 export async function POST(request: NextRequest) {
-  return withCreditsCheck(request, generateHandler)
+  return generateHandler(request)
 }

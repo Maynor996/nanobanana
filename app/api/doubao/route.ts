@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withCreditsCheck } from '../../lib/credits-middleware'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-async function doubaoHandler(request: NextRequest, userEmail: string) {
+async function doubaoHandler(request: NextRequest) {
   try {
     const { prompt, imageData, imageDataArray, size = 'adaptive', guidance_scale = 5.5, watermark = true, seed = -1 } = await request.json()
 
@@ -176,5 +175,5 @@ async function doubaoHandler(request: NextRequest, userEmail: string) {
 }
 
 export async function POST(request: NextRequest) {
-  return withCreditsCheck(request, doubaoHandler)
+  return doubaoHandler(request)
 }

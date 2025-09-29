@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withCreditsCheck } from '../../lib/credits-middleware'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-async function geminiHandler(request: NextRequest, userEmail: string) {
+async function geminiHandler(request: NextRequest) {
   try {
     const { prompt, imageData, imageDataArray } = await request.json()
 
@@ -212,5 +211,5 @@ async function geminiHandler(request: NextRequest, userEmail: string) {
 }
 
 export async function POST(request: NextRequest) {
-  return withCreditsCheck(request, geminiHandler)
+  return geminiHandler(request)
 }

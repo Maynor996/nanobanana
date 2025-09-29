@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import './nano.css'
-import AnonymousUser from '../components/AnonymousUser'
-import UserAuth from '../components/UserAuth'
+import { BannerAd, RectangleAd, ResponsiveAd } from '../components/GoogleAds'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
@@ -22,13 +21,6 @@ export default function NanoPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string>('')
-  const [userEmail, setUserEmail] = useState<string>('')
-  const [userCredits, setUserCredits] = useState<number>(0)
-  const [isUnlimited, setIsUnlimited] = useState(false)
-  const [sessionId, setSessionId] = useState<string>('')
-  const [isAnonymous, setIsAnonymous] = useState(true)
-  const [forceShowLogin, setForceShowLogin] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
   const [showErrorModal, setShowErrorModal] = useState(false)
   const [errorModalTitle, setErrorModalTitle] = useState('')
   const [errorModalMessage, setErrorModalMessage] = useState('')
@@ -56,44 +48,6 @@ export default function NanoPage() {
     { icon: '🔍', text: '详细分析', value: '在原图基础上添加详细的标注说明，分析图片内容和关键元素' }
   ]
 
-  // 获取用户积分信息
-  const handleCreditsUpdate = (credits: number, unlimited: boolean) => {
-    setUserCredits(credits)
-    setIsUnlimited(unlimited)
-  }
-
-  // 处理会话就绪
-  const handleSessionReady = (sid: string) => {
-    setSessionId(sid)
-    // 会话就绪后立即检查用户状态
-    checkUserStatus()
-  }
-
-  // 检查用户状态和积分
-  const checkUserStatus = async () => {
-    if (isAnonymous && sessionId) {
-      try {
-        const response = await fetch(`/api/anonymous/credits?sessionId=${encodeURIComponent(sessionId)}`)
-        const data = await response.json()
-
-        if (response.ok && data.success) {
-          setUserCredits(Math.max(0, data.remainingFreeUses))
-          if (data.remainingFreeUses <= 0 && !localStorage.getItem('nano_user_email')) {
-            setForceShowLogin(true)
-          }
-        }
-      } catch (error) {
-        console.error('检查用户状态失败:', error)
-      }
-    }
-  }
-
-  // 处理用户认证成功
-  const handleUserAuth = (email: string) => {
-    setUserEmail(email)
-    setIsAnonymous(false)
-    setForceShowLogin(false) // 重置强制登录提示状态
-  }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -282,30 +236,17 @@ export default function NanoPage() {
   }
 
   const handleGenerate = async () => {
-    if (!sessionId) {
-      showError('系统提示', '正在初始化，请稍候...')
-      return
-    }
-
     if (mode === 'text' && prompt.length < 3) {
       showError('输入提示', '请输入至少3个字符的描述')
       return
     }
     if (mode === 'upload' && imageFiles.length === 0) {
-      console.log('图片检查失败:', { mode, imageFilesLength: imageFiles.length, imageFiles, isUploading })
       showError('上传提示', '请先上传图片')
       return
     }
     
     if (isUploading) {
       showError('上传提示', '图片正在上传中，请稍候...')
-      return
-    }
-
-    // 现在匿名用户可以无限使用，不需要检查积分
-    if (!isAnonymous && !isUnlimited && userCredits <= 0) {
-      showError('积分不足', '积分不足，请先购买套餐')
-      window.location.href = '/pricing'
       return
     }
 
@@ -352,12 +293,8 @@ export default function NanoPage() {
         requestData.size = imageSize
       }
 
-      // 如果是注册用户，使用邮箱；如果是匿名用户，使用sessionId
-      if (!isAnonymous && userEmail) {
-        requestData.email = userEmail
-      } else if (isAnonymous && sessionId) {
-        requestData.sessionId = sessionId
-      }
+      // 使用时间戳作为用户标识
+      requestData.timestamp = Date.now()
 
       const response = await fetch(apiEndpoint, {
         method: 'POST',
@@ -375,29 +312,13 @@ export default function NanoPage() {
       }
 
       if (!response.ok) {
-        if (response.status === 402) {
-          if (data.loginRequired) {
-            // 匿名用户积分用完，更新积分显示为0并触发登录提示
-            setUserCredits(0)
-            setIsAnonymous(false) // 设置为非匿名用户以触发登录提示
-            setForceShowLogin(true) // 强制显示登录提示
-            showError('免费试用结束', data.error || '您的免费试用次数已用完，请登录账号继续使用')
-            return
-          } else {
-            showError('积分不足', data.error || '积分不足')
-            window.location.href = '/pricing'
-            return
-          }
-        } else if (response.status === 401) {
-          showError('登录提示', data.error || '请先登录')
-          return
-        } else if (response.status === 524) {
+        if (response.status === 524) {
           const errorMsg = `服务器响应超时，请稍后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
           showError('服务器超时', errorMsg)
           return
         } else if (response.status === 500) {
           const errorMsg = `服务器内部错误：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
-          showError('服务器超时', errorMsg)
+          showError('服务器错误', errorMsg)
           return
         }
         const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
@@ -405,11 +326,6 @@ export default function NanoPage() {
         return
       } else {
         setResult(data)
-        // 更新剩余积分（仅对注册用户）
-        if (data.remainingCredits !== undefined && !isAnonymous) {
-          setUserCredits(data.remainingCredits)
-        }
-        // 匿名用户现在无限使用，不需要更新积分显示
       }
     } catch (err) {
       console.error('请求错误:', err)
@@ -494,91 +410,24 @@ export default function NanoPage() {
       <header style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         padding: '1rem 2rem',
         borderBottom: '1px solid #1a1a1a'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <h1 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold',
-            color: '#10b981',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            🍌 Nano Banana
-          </h1>
-          <nav style={{ display: 'flex', gap: '1.5rem' }}>
-            <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>功能特点</button>
-            <button 
-              onClick={() => window.location.href = '/pricing'}
-              style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
-            >
-              定价
-            </button>
-            <button style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>案例展示</button>
-          </nav>
-        </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          {!userEmail ? (
-            <>
-              <button
-                onClick={() => {
-                  console.log('登录按钮被点击')
-                  setShowLoginModal(true)
-                }}
-                style={{
-                  backgroundColor: 'transparent',
-                  color: '#888',
-                  border: '1px solid #333',
-                  padding: '0.5rem 0.9rem',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)'
-                  e.currentTarget.style.borderColor = '#10b981'
-                  e.currentTarget.style.color = '#10b981'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.borderColor = '#333'
-                  e.currentTarget.style.color = '#888'
-                }}
-              >
-                登录
-              </button>
-              <AnonymousUser 
-                onSessionReady={handleSessionReady} 
-                forceShowLogin={forceShowLogin}
-                onLoginComplete={() => setForceShowLogin(false)}
-              />
-              {/* 直接显示的登录弹窗 */}
-              {showLoginModal && (
-                <UserAuth
-                  onAuth={(email) => {
-                    handleUserAuth(email)
-                    setShowLoginModal(false)
-                  }}
-                  onCreditsUpdate={handleCreditsUpdate}
-                  autoOpen={true}
-                  hideTrigger={true}
-                  onClose={() => setShowLoginModal(false)}
-                />
-              )}
-            </>
-          ) : (
-            <UserAuth
-              onAuth={handleUserAuth}
-              onCreditsUpdate={handleCreditsUpdate}
-              triggerText="登录"
-              hideTrigger
-            />
-          )}
-        </div>
+        <h1 style={{ 
+          fontSize: '2.5rem', 
+          fontWeight: 'bold',
+          background: 'linear-gradient(135deg, #10b981, #00a3ff)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          margin: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          🍌 Nano Banana - 免费 AI 图像生成
+        </h1>
       </header>
 
       {/* Mode Selector */}
@@ -660,6 +509,7 @@ export default function NanoPage() {
           ✨ 文生图模式
         </button>
       </div>
+
 
       {/* Model Selector */}
       <div className="model-selector" style={{ display: 'flex', gap: '1rem', padding: '0 2rem 2rem', justifyContent: 'center' }}>
@@ -1220,6 +1070,11 @@ export default function NanoPage() {
 
         {/* Right Panel - AI Options */}
         <div className="right-panel" style={{ width: '350px' }}>
+          {/* 右侧矩形广告 */}
+          <div style={{ marginBottom: '1rem' }}>
+            <RectangleAd style={{ width: '100%' }} />
+          </div>
+          
           <div style={{
             background: 'linear-gradient(135deg, #111111, #1a1a1a)',
             borderRadius: '1.5rem',
@@ -1329,45 +1184,30 @@ export default function NanoPage() {
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <span style={{ fontSize: '0.9rem', color: '#888' }}>🎯 生成数量</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9rem', color: '#10b981' }}>{imageCount} 张</span>
-                  {userEmail && (
-                    <span style={{
-                      fontSize: '0.7rem',
-                      padding: '0.2rem 0.4rem',
-                      borderRadius: '0.3rem',
-                      backgroundColor: isUnlimited ? '#10b981' : '#8b5cf6',
-                      color: 'white'
-                    }}>
-                      {isUnlimited ? '无限版' : '专业版'}
-                    </span>
-                  )}
-              </div>
               </div>
 
-              {/* 免费用户提示 */}
-              {!userEmail && (
-                <div style={{
-                  backgroundColor: '#0f2419',
-                  border: '1px solid #10b981',
-                  borderRadius: '0.5rem',
-                  padding: '0.75rem',
-                  marginBottom: '1rem',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                    🔓 免费体验
-                  </div>
-                  <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '0' }}>
-                    登录后可免费试用 3 次，付费用户可生成多张图片
-                  </p>
+              {/* 免费服务提示 */}
+              <div style={{
+                backgroundColor: '#0f2419',
+                border: '1px solid #10b981',
+                borderRadius: '0.5rem',
+                padding: '0.75rem',
+                marginBottom: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                  🎉 完全免费使用
                 </div>
-              )}
+                <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '0' }}>
+                  无需注册，无需付费，AI 图像生成完全免费！
+                </p>
+              </div>
 
               <input
                 type="range"
                 min="1"
-                max={(!isAnonymous && userEmail) ? (isUnlimited ? 10 : 4) : 1}
+                max="4"
                 value={imageCount}
                 onChange={(e) => setImageCount(Number(e.target.value))}
                 style={{
@@ -1390,42 +1230,12 @@ export default function NanoPage() {
                 color: '#666'
               }}>
                 <span>1 张</span>
-                {(!isAnonymous && userEmail) && (
-                  <>
                 <span>2 张</span>
                 <span>3 张</span>
-                    <span>{isUnlimited ? 10 : 4} 张</span>
-                  </>
-                )}
+                <span>4 张</span>
               </div>
 
-              {userEmail && imageCount > 1 && (
-                <div style={{
-                  backgroundColor: '#1a1a2e',
-                  border: '1px solid #8b5cf6',
-                  borderRadius: '0.5rem',
-                  padding: '0.75rem',
-                  marginTop: '0.5rem'
-                }}>
-                  <div style={{
-                    color: '#8b5cf6',
-                    fontSize: '0.9rem',
-                    fontWeight: 'bold',
-                    marginBottom: '0.25rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <span>⭐</span>
-                    高级功能已启用
-                  </div>
-                  <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '0' }}>
-                    使用专业级AI引擎生成 {imageCount} 张多样化图片
-                  </p>
-                </div>
-              )}
-
-              <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+              <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '1rem' }}>
                 💡 提示：描述越详细，生成的图像越接近你的想象
               </p>
             </div>
@@ -1433,7 +1243,7 @@ export default function NanoPage() {
             <button
               className={`generate-button ${loading ? 'loading' : 'button-glow'}`}
               onClick={handleGenerate}
-              disabled={loading || !sessionId || isUploading}
+              disabled={loading || isUploading}
               style={{
                 width: '100%',
                 padding: '1rem',
@@ -1480,14 +1290,14 @@ export default function NanoPage() {
                 </>
               ) : (
                 <>
-                  🎨 {isAnonymous ? '免费生成' : '开始生成'} ({imageCount} 张)
+                  🎨 完全免费生成 ({imageCount} 张)
                   <span style={{
                     backgroundColor: 'rgba(255,255,255,0.2)',
                     padding: '0.25rem 0.5rem',
                     borderRadius: '0.25rem',
                     fontSize: '0.9rem'
                   }}>
-                    💎 {isUnlimited ? '∞' : isAnonymous ? '无限' : userCredits} {isAnonymous ? '免费' : '积分'}
+                    💎 ∞ 免费
                   </span>
                 </>
               )}
@@ -1582,7 +1392,7 @@ export default function NanoPage() {
                       生成成功 {result.totalGenerated}/{result.requestedCount} 张
                     </div>
                     <div style={{ color: '#888', fontSize: '0.8rem' }}>
-                      {isAnonymous ? '免费生成 · 无限制使用' : `消耗 ${result.creditsDeducted} 积分 · 剩余 ${result.remainingCredits} 积分`}
+                      免费生成 · 无限制使用
                     </div>
                   </div>
               </div>
@@ -1926,6 +1736,11 @@ export default function NanoPage() {
           )}
         </div>
       )}
+
+      {/* 底部自适应广告 */}
+      <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
+        <ResponsiveAd style={{ maxWidth: '1200px', width: '100%' }} />
+      </div>
       
       {/* 使用示例部分 */}
       <div style={{
