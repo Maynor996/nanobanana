@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import './nano.css'
 import { BannerAd, ResponsiveAd } from '../components/GoogleAds'
 import BrowserWarning from '../components/BrowserWarning'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
 type Model = 'gemini' | 'doubao'
 
 export default function NanoPage() {
+  const { language, setLanguage, t } = useLanguage()
   const [mode, setMode] = useState<Mode>('text')
   const [prompt, setPrompt] = useState('')
   const [imageFiles, setImageFiles] = useState<File[]>([])
@@ -410,25 +412,103 @@ export default function NanoPage() {
       {/* Header */}
       <header style={{
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1rem 2rem',
         borderBottom: '1px solid #1a1a1a'
       }}>
-        <h1 style={{ 
-          fontSize: '2.5rem', 
-          fontWeight: 'bold',
-          background: 'linear-gradient(135deg, #10b981, #00a3ff)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          margin: 0,
+        <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem'
+          gap: '1rem',
+          marginBottom: '0.5rem',
+          width: '100%',
+          justifyContent: 'center'
         }}>
-          🍌 Nano Banana - 免费 AI 图像生成
-        </h1>
+          <h1 style={{
+            fontSize: '2.5rem',
+            fontWeight: 'bold',
+            background: 'linear-gradient(135deg, #10b981, #00a3ff)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            {t.header.title}
+          </h1>
+
+          {/* Language Switcher */}
+          <div style={{
+            display: 'flex',
+            gap: '0.5rem',
+            backgroundColor: '#1a1a1a',
+            padding: '0.5rem',
+            borderRadius: '0.5rem',
+            border: '1px solid #333'
+          }}>
+            <button
+              onClick={() => setLanguage('zh')}
+              style={{
+                padding: '0.25rem 0.75rem',
+                backgroundColor: language === 'zh' ? '#10b981' : 'transparent',
+                color: language === 'zh' ? 'white' : '#888',
+                border: 'none',
+                borderRadius: '0.25rem',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              中文
+            </button>
+            <button
+              onClick={() => setLanguage('en')}
+              style={{
+                padding: '0.25rem 0.75rem',
+                backgroundColor: language === 'en' ? '#10b981' : 'transparent',
+                color: language === 'en' ? 'white' : '#888',
+                border: 'none',
+                borderRadius: '0.25rem',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              EN
+            </button>
+          </div>
+        </div>
+
+        {/* Subtitle Features */}
+        <div style={{
+          display: 'flex',
+          gap: '1.5rem',
+          fontSize: '0.9rem',
+          color: '#888',
+          marginTop: '0.5rem',
+          flexWrap: 'wrap',
+          justifyContent: 'center'
+        }}>
+          <span style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+            color: '#10b981',
+            fontWeight: '500'
+          }}>
+            ✨ {t.header.subtitle}
+          </span>
+          <span style={{ color: '#666' }}>•</span>
+          <span>{t.header.poweredBy}</span>
+          <span style={{ color: '#666' }}>•</span>
+          <span>{t.header.noLogin}</span>
+          <span style={{ color: '#666' }}>•</span>
+          <span>{t.header.unlimited}</span>
+        </div>
       </header>
 
       {/* Mode Selector */}
@@ -469,7 +549,7 @@ export default function NanoPage() {
             }
           }}
         >
-          📷 通过对话编辑图像
+          {t.mode.upload}
         </button>
         <button
           className="mode-button"
@@ -507,7 +587,7 @@ export default function NanoPage() {
             }
           }}
         >
-          ✨ 文生图模式
+          {t.mode.text}
         </button>
       </div>
 
@@ -515,7 +595,7 @@ export default function NanoPage() {
       {/* Model Selector */}
       <div className="model-selector" style={{ display: 'flex', gap: '1rem', padding: '0 2rem 2rem', justifyContent: 'center' }}>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <span style={{ color: '#888', fontSize: '0.9rem' }}>AI模型:</span>
+          <span style={{ color: '#888', fontSize: '0.9rem' }}>{t.model.label}</span>
           <button
             onClick={() => setModel('gemini')}
             style={{
@@ -534,11 +614,11 @@ export default function NanoPage() {
                 : 'none'
             }}
           >
-            🤖 Gemini 2.5 Flash
+            {t.model.gemini}
           </button>
           <button
             onClick={() => {
-              showError('功能提示', '豆包模型功能正在开发中，敬请期待！目前请使用 Gemini 2.5 Flash 模型。')
+              showError(t.model.doubao.replace('🚧 ', ''), t.model.doubaoTip)
             }}
             style={{
               padding: '0.5rem 1rem',
@@ -553,14 +633,14 @@ export default function NanoPage() {
             }}
             disabled
           >
-            🚧 豆包模型(待开发)
+            {t.model.doubao}
           </button>
         </div>
         
         {/* Size Selector for Doubao */}
         {model === 'doubao' && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ color: '#888', fontSize: '0.9rem' }}>尺寸:</span>
+            <span style={{ color: '#888', fontSize: '0.9rem' }}>{t.model.size}</span>
             {['1k', '2k', '4k'].map((size) => (
               <button
                 key={size}
@@ -1189,15 +1269,15 @@ export default function NanoPage() {
                 textAlign: 'center'
               }}>
                 <div style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                  🎉 完全免费使用
+                  {t.freeService.title}
                 </div>
                 <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '0' }}>
-                  无需注册，无需付费，AI 图像生成完全免费！
+                  {t.freeService.description}
                 </p>
               </div>
 
               <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '1rem' }}>
-                💡 提示：描述越详细，生成的图像越接近你的想象
+                {t.aiOptions.tip}
               </p>
             </div>
 
@@ -1243,34 +1323,34 @@ export default function NanoPage() {
             >
               {loading ? (
                 <>
-                  <span className="rotating">⚙️</span> 生成中...
+                  <span className="rotating">⚙️</span> {t.generate.generating}
                 </>
               ) : isUploading ? (
                 <>
-                  <span className="rotating">📤</span> 上传中...
+                  <span className="rotating">📤</span> {t.generate.uploading}
                 </>
               ) : (
                 <>
-                  🎨 完全免费生成
+                  {t.generate.button}
                   <span style={{
                     backgroundColor: 'rgba(255,255,255,0.2)',
                     padding: '0.25rem 0.5rem',
                     borderRadius: '0.25rem',
                     fontSize: '0.9rem'
                   }}>
-                    💎 ∞ 免费
+                    {t.generate.badge}
                   </span>
                 </>
               )}
             </button>
 
-            <p style={{ 
-              textAlign: 'center', 
+            <p style={{
+              textAlign: 'center',
               marginTop: '1rem',
               fontSize: '0.9rem',
               color: '#ef4444'
             }}>
-              {mode === 'text' ? '请输入至少 3 个字符的描述' : ''}
+              {mode === 'text' ? t.generate.requirement : ''}
             </p>
           </div>
         </div>
@@ -1332,7 +1412,7 @@ export default function NanoPage() {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-            🎉 生成结果
+            {t.result.title}
           </h3>
           </div>
 
@@ -1415,7 +1495,7 @@ export default function NanoPage() {
                     e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)'
                   }}
                 >
-                  💾 下载图片
+                  {t.result.download}
                 </button>
                 <button
                   onClick={() => {
@@ -1467,14 +1547,14 @@ export default function NanoPage() {
                     e.currentTarget.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3)'
                   }}
                 >
-                  📤 分享图片
+                  {t.result.share}
                 </button>
                 <button
                   onClick={() => {
                     const img = document.getElementById('generated-image') as HTMLImageElement
                     if (img) {
                       navigator.clipboard.writeText(img.src)
-                      showError('复制成功', '图片链接已复制到剪贴板！')
+                      showError(t.result.copied, t.result.copiedMessage)
                     }
                   }}
                   style={{
@@ -1501,7 +1581,7 @@ export default function NanoPage() {
                     e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)'
                   }}
                 >
-                  🔗 复制链接
+                  {t.result.copy}
                 </button>
               </div>
             </div>
