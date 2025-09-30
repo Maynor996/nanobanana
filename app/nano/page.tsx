@@ -16,7 +16,6 @@ export default function NanoPage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [style, setStyle] = useState<Style>('none')
-  const [imageCount, setImageCount] = useState(1)
   const [model, setModel] = useState<Model>('gemini')
   const [imageSize, setImageSize] = useState<string>('1k')
   const [loading, setLoading] = useState(false)
@@ -285,8 +284,7 @@ export default function NanoPage() {
 
       // 添加用户标识到请求
       const requestData: any = {
-        ...requestBody,
-        count: imageCount
+        ...requestBody
       }
 
       // 如果是豆包模型，添加尺寸参数
@@ -1181,11 +1179,6 @@ export default function NanoPage() {
             )}
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.9rem', color: '#888' }}>🎯 生成数量</span>
-                <span style={{ fontSize: '0.9rem', color: '#10b981' }}>{imageCount} 张</span>
-              </div>
-
               {/* 免费服务提示 */}
               <div style={{
                 backgroundColor: '#0f2419',
@@ -1201,37 +1194,6 @@ export default function NanoPage() {
                 <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '0' }}>
                   无需注册，无需付费，AI 图像生成完全免费！
                 </p>
-              </div>
-
-              <input
-                type="range"
-                min="1"
-                max="4"
-                value={imageCount}
-                onChange={(e) => setImageCount(Number(e.target.value))}
-                style={{
-                  width: '100%',
-                  height: '8px',
-                  borderRadius: '6px',
-                  background: 'linear-gradient(90deg, #1a1a1a, #2a2a2a)',
-                  outline: 'none',
-                  WebkitAppearance: 'none',
-                  cursor: 'pointer'
-                }}
-                className="custom-slider"
-              />
-
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                marginTop: '0.5rem',
-                fontSize: '0.8rem',
-                color: '#666'
-              }}>
-                <span>1 张</span>
-                <span>2 张</span>
-                <span>3 张</span>
-                <span>4 张</span>
               </div>
 
               <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '1rem' }}>
@@ -1289,7 +1251,7 @@ export default function NanoPage() {
                 </>
               ) : (
                 <>
-                  🎨 完全免费生成 ({imageCount} 张)
+                  🎨 完全免费生成
                   <span style={{
                     backgroundColor: 'rgba(255,255,255,0.2)',
                     padding: '0.25rem 0.5rem',
@@ -1372,139 +1334,10 @@ export default function NanoPage() {
             }}>
             🎉 生成结果
           </h3>
-
-            {/* 批量生成统计 */}
-            {result.images && result.images.length > 0 && (
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '1rem',
-                backgroundColor: '#1a1a1a',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '2rem',
-                border: '1px solid #10b981',
-                marginTop: '1rem'
-              }}>
-                <div style={{ color: '#10b981', fontSize: '1.2rem' }}>✨</div>
-                                  <div>
-                    <div style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                      生成成功 {result.totalGenerated}/{result.requestedCount} 张
-                    </div>
-                    <div style={{ color: '#888', fontSize: '0.8rem' }}>
-                      免费生成 · 无限制使用
-                    </div>
-                  </div>
-              </div>
-            )}
           </div>
 
-          {/* 批量图片显示 */}
-          {result.images && result.images.length > 0 ? (
-            <div className="result-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '2rem',
-              marginBottom: '2rem'
-            }}>
-              {result.images.map((image: any, index: number) => (
-                <div key={index} style={{
-                  backgroundColor: '#111111',
-                  borderRadius: '1rem',
-                  overflow: 'hidden',
-                  border: '1px solid #333',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)'
-                  e.currentTarget.style.boxShadow = '0 15px 40px rgba(16, 185, 129, 0.3)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}>
-                  <div style={{
-                    position: 'relative',
-                    backgroundColor: '#0a0a0a',
-                    padding: '0.5rem 1rem',
-                    borderBottom: '1px solid #333'
-                  }}>
-                    <span style={{
-                      color: '#10b981',
-                      fontSize: '0.9rem',
-                      fontWeight: 'bold'
-                    }}>
-                      图片 {image.index}
-                    </span>
-                  </div>
-
-                  <img
-                    className="result-image"
-                    src={`data:${image.mimeType};base64,${image.imageData}`}
-                    alt={`Generated ${image.index}`}
-                    style={{
-                      width: '100%',
-                      height: '250px',
-                      objectFit: 'cover',
-                      display: 'block'
-                    }}
-                  />
-
-                  <div style={{
-                    padding: '1rem',
-                    display: 'flex',
-                    gap: '0.5rem',
-                    justifyContent: 'center'
-                  }}>
-                    <button
-                      onClick={() => {
-                        const link = document.createElement('a')
-                        link.href = `data:${image.mimeType};base64,${image.imageData}`
-                        link.download = `nano-banana-${Date.now()}-${image.index}.png`
-                        link.click()
-                      }}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        background: 'linear-gradient(135deg, #10b981, #059669)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0.5rem',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                    >
-                      💾 下载
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(`data:${image.mimeType};base64,${image.imageData}`)
-                        alert('图片已复制到剪贴板！')
-                      }}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '0.5rem',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                    >
-                      📋 复制
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : result.imageData || result.imageUrl ? (
-            /* 单图片显示（向后兼容） */
+          {/* 图片显示 */}
+          {result.imageData || result.imageUrl ? (
             <div style={{ textAlign: 'center' }}>
               <img
                 id="generated-image"
