@@ -82,8 +82,9 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
       alert(t?.share?.uploadFailed || '上传失败，请重试')
       return
     }
-    const text = encodeURIComponent('使用 Nano Banana 免费生成的AI图片！🍌✨\n\n100% 免费 | 无需登录 | 无限生成')
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank')
+    const text = encodeURIComponent(`使用 Nano Banana 免费生成的AI图片！🍌✨\n\n100% 免费 | 无需登录 | 无限生成\n\n🔗 https://nanobanana-free.top/nano`)
+    const imageUrl = encodeURIComponent(url)
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${imageUrl}`, '_blank')
   }
 
   // 分享到即刻
@@ -93,10 +94,121 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
       alert(t?.share?.uploadFailed || '上传失败，请重试')
       return
     }
-    // 即刻的分享方式：直接打开即刻并附带图片链接
-    const text = encodeURIComponent(`使用 Nano Banana 免费生成的AI图片！🍌✨\n\n${url}\n\n100% 免费 | 无需登录 | 无限生成`)
-    // 即刻支持网页版发布，打开发布页面
-    window.open(`https://web.okjike.com/post?text=${text}`, '_blank')
+    // 即刻分享：复制链接并打开发布页面
+    const shareText = `使用 Nano Banana 免费生成的AI图片！🍌✨\n\n100% 免费 | 无需登录 | 无限生成\n\n${url}\n\n🔗 https://nanobanana-free.top/nano`
+
+    // 复制文本到剪贴板
+    try {
+      await navigator.clipboard.writeText(shareText)
+      alert('分享内容已复制到剪贴板！\n\n即将打开即刻发布页面，请粘贴分享内容。')
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+
+    // 打开即刻发布页面
+    window.open('https://web.okjike.com/', '_blank')
+  }
+
+  // 分享到小红书
+  const shareToXiaohongshu = async () => {
+    const url = await uploadAndGetLink()
+    if (!url) {
+      alert(t?.share?.uploadFailed || '上传失败，请重试')
+      return
+    }
+
+    const shareText = `使用 Nano Banana 免费生成的AI图片！🍌✨\n\n100% 免费 | 无需登录 | 无限生成\n\n图片链接：${url}\n\n🔗 https://nanobanana-free.top/nano`
+
+    try {
+      await navigator.clipboard.writeText(shareText)
+      alert('分享内容已复制到剪贴板！\n\n即将打开小红书创作中心，请下载图片并粘贴文案发布。')
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+
+    // 打开小红书创作者中心
+    window.open('https://creator.xiaohongshu.com/', '_blank')
+  }
+
+  // 分享到B站
+  const shareToBilibili = async () => {
+    const url = await uploadAndGetLink()
+    if (!url) {
+      alert(t?.share?.uploadFailed || '上传失败，请重试')
+      return
+    }
+
+    const shareText = `使用 Nano Banana 免费生成的AI图片！🍌✨\n\n100% 免费 | 无需登录 | 无限生成\n\n图片链接：${url}\n\n🔗 https://nanobanana-free.top/nano`
+
+    try {
+      await navigator.clipboard.writeText(shareText)
+      alert('分享内容已复制到剪贴板！\n\n即将打开B站动态发布页面，请粘贴文案并上传图片。')
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+
+    // 打开B站动态发布页
+    window.open('https://t.bilibili.com/', '_blank')
+  }
+
+  // 分享到抖音
+  const shareToDouyin = async () => {
+    const url = await uploadAndGetLink()
+    if (!url) {
+      alert(t?.share?.uploadFailed || '上传失败，请重试')
+      return
+    }
+
+    const shareText = `使用 Nano Banana 免费生成的AI图片！🍌✨\n\n100% 免费 | 无需登录 | 无限生成\n\n🔗 https://nanobanana-free.top/nano`
+
+    try {
+      await navigator.clipboard.writeText(shareText)
+      // 先下载图片
+      downloadImage()
+      alert('图片已下载，文案已复制！\n\n请在抖音APP中上传图片并粘贴文案发布。')
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+  }
+
+  // 分享到TikTok
+  const shareToTikTok = async () => {
+    const url = await uploadAndGetLink()
+    if (!url) {
+      alert(t?.share?.uploadFailed || '上传失败，请重试')
+      return
+    }
+
+    const shareText = `AI-generated image by Nano Banana! 🍌✨\n\n100% Free | No Login | Unlimited\n\n🔗 https://nanobanana-free.top/nano`
+
+    try {
+      await navigator.clipboard.writeText(shareText)
+      // 先下载图片
+      downloadImage()
+      alert('Image downloaded, caption copied!\n\nPlease upload the image in TikTok app and paste the caption.')
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+  }
+
+  // 分享到Instagram
+  const shareToInstagram = async () => {
+    const url = await uploadAndGetLink()
+    if (!url) {
+      alert(t?.share?.uploadFailed || '上传失败，请重试')
+      return
+    }
+
+    const shareText = `AI-generated image by Nano Banana! 🍌✨\n\n100% Free | No Login | Unlimited\n\n🔗 https://nanobanana-free.top/nano`
+
+    try {
+      await navigator.clipboard.writeText(shareText)
+      // 先下载图片
+      downloadImage()
+      alert('Image downloaded, caption copied!\n\nPlease upload the image in Instagram app and paste the caption.')
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
   }
 
   return (
@@ -310,79 +422,47 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
           <h4 style={{ fontSize: '0.9rem', color: '#888', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {t?.share?.directShare || '直接分享到'}
           </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <button
-              onClick={shareToTwitter}
-              disabled={isUploading}
-              style={{
-                padding: '0.75rem',
-                background: isUploading ? '#333' : 'linear-gradient(135deg, #000000, #333333)',
-                color: isUploading ? '#666' : 'white',
-                border: 'none',
-                borderRadius: '0.75rem',
-                cursor: isUploading ? 'not-allowed' : 'pointer',
-                fontSize: '0.95rem',
-                fontWeight: '600',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                opacity: isUploading ? 0.5 : 1,
-                boxShadow: isUploading ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.3)'
-              }}
-              onMouseEnter={(e) => {
-                if (!isUploading) {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isUploading) {
-                  e.currentTarget.style.transform = 'none'
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)'
-                }
-              }}
-            >
-              <span style={{ fontSize: '1.2rem' }}>𝕏</span>
-              <span>{t?.share?.twitter || 'X (Twitter)'}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.6rem' }}>
+            {/* X (Twitter) */}
+            <button onClick={shareToTwitter} disabled={isUploading} style={{ padding: '0.6rem', background: isUploading ? '#333' : 'linear-gradient(135deg, #000000, #333333)', color: isUploading ? '#666' : 'white', border: 'none', borderRadius: '0.6rem', cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', opacity: isUploading ? 0.5 : 1, boxShadow: isUploading ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.3)', minHeight: '65px' }} onMouseEnter={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.5)' } }} onMouseLeave={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.3)' } }}>
+              <span style={{ fontSize: '1.3rem' }}>𝕏</span>
+              <span style={{ fontSize: '0.75rem' }}>{t?.share?.twitter || 'X'}</span>
             </button>
 
-            <button
-              onClick={shareToJike}
-              disabled={isUploading}
-              style={{
-                padding: '0.75rem',
-                background: isUploading ? '#333' : 'linear-gradient(135deg, #FFE411, #FFC700)',
-                color: isUploading ? '#666' : '#000',
-                border: 'none',
-                borderRadius: '0.75rem',
-                cursor: isUploading ? 'not-allowed' : 'pointer',
-                fontSize: '0.95rem',
-                fontWeight: '600',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                opacity: isUploading ? 0.5 : 1,
-                boxShadow: isUploading ? 'none' : '0 2px 8px rgba(255, 228, 17, 0.3)'
-              }}
-              onMouseEnter={(e) => {
-                if (!isUploading) {
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 228, 17, 0.5)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isUploading) {
-                  e.currentTarget.style.transform = 'none'
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 228, 17, 0.3)'
-                }
-              }}
-            >
-              <span style={{ fontSize: '1.2rem' }}>🟡</span>
-              <span>{t?.share?.jike || '即刻'}</span>
+            {/* 即刻 */}
+            <button onClick={shareToJike} disabled={isUploading} style={{ padding: '0.6rem', background: isUploading ? '#333' : 'linear-gradient(135deg, #FFE411, #FFC700)', color: isUploading ? '#666' : '#000', border: 'none', borderRadius: '0.6rem', cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', opacity: isUploading ? 0.5 : 1, boxShadow: isUploading ? 'none' : '0 2px 6px rgba(255, 228, 17, 0.3)', minHeight: '65px' }} onMouseEnter={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(255, 228, 17, 0.5)' } }} onMouseLeave={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(255, 228, 17, 0.3)' } }}>
+              <span style={{ fontSize: '1.3rem' }}>🟡</span>
+              <span style={{ fontSize: '0.75rem' }}>{t?.share?.jike || '即刻'}</span>
+            </button>
+
+            {/* 小红书 */}
+            <button onClick={shareToXiaohongshu} disabled={isUploading} style={{ padding: '0.6rem', background: isUploading ? '#333' : 'linear-gradient(135deg, #FF2442, #FF6B6B)', color: isUploading ? '#666' : 'white', border: 'none', borderRadius: '0.6rem', cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', opacity: isUploading ? 0.5 : 1, boxShadow: isUploading ? 'none' : '0 2px 6px rgba(255, 36, 66, 0.3)', minHeight: '65px' }} onMouseEnter={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(255, 36, 66, 0.5)' } }} onMouseLeave={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(255, 36, 66, 0.3)' } }}>
+              <span style={{ fontSize: '1.3rem' }}>📕</span>
+              <span style={{ fontSize: '0.75rem' }}>{t?.share?.xiaohongshu || '小红书'}</span>
+            </button>
+
+            {/* B站 */}
+            <button onClick={shareToBilibili} disabled={isUploading} style={{ padding: '0.6rem', background: isUploading ? '#333' : 'linear-gradient(135deg, #00A1D6, #0081C6)', color: isUploading ? '#666' : 'white', border: 'none', borderRadius: '0.6rem', cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', opacity: isUploading ? 0.5 : 1, boxShadow: isUploading ? 'none' : '0 2px 6px rgba(0, 161, 214, 0.3)', minHeight: '65px' }} onMouseEnter={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 161, 214, 0.5)' } }} onMouseLeave={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 161, 214, 0.3)' } }}>
+              <span style={{ fontSize: '1.3rem' }}>📺</span>
+              <span style={{ fontSize: '0.75rem' }}>{t?.share?.bilibili || 'B站'}</span>
+            </button>
+
+            {/* 抖音 */}
+            <button onClick={shareToDouyin} disabled={isUploading} style={{ padding: '0.6rem', background: isUploading ? '#333' : 'linear-gradient(135deg, #000000, #1E1E1E)', color: isUploading ? '#666' : 'white', border: 'none', borderRadius: '0.6rem', cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', opacity: isUploading ? 0.5 : 1, boxShadow: isUploading ? 'none' : '0 2px 6px rgba(0, 0, 0, 0.4)', minHeight: '65px' }} onMouseEnter={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.6)' } }} onMouseLeave={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.4)' } }}>
+              <span style={{ fontSize: '1.3rem' }}>🎵</span>
+              <span style={{ fontSize: '0.75rem' }}>{t?.share?.douyin || '抖音'}</span>
+            </button>
+
+            {/* TikTok */}
+            <button onClick={shareToTikTok} disabled={isUploading} style={{ padding: '0.6rem', background: isUploading ? '#333' : 'linear-gradient(135deg, #000000, #EE1D52)', color: isUploading ? '#666' : 'white', border: 'none', borderRadius: '0.6rem', cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', opacity: isUploading ? 0.5 : 1, boxShadow: isUploading ? 'none' : '0 2px 6px rgba(238, 29, 82, 0.3)', minHeight: '65px' }} onMouseEnter={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(238, 29, 82, 0.5)' } }} onMouseLeave={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(238, 29, 82, 0.3)' } }}>
+              <span style={{ fontSize: '1.3rem' }}>🎬</span>
+              <span style={{ fontSize: '0.75rem' }}>{t?.share?.tiktok || 'TikTok'}</span>
+            </button>
+
+            {/* Instagram */}
+            <button onClick={shareToInstagram} disabled={isUploading} style={{ padding: '0.6rem', background: isUploading ? '#333' : 'linear-gradient(135deg, #833AB4, #FD1D1D, #FCAF45)', color: isUploading ? '#666' : 'white', border: 'none', borderRadius: '0.6rem', cursor: isUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', opacity: isUploading ? 0.5 : 1, boxShadow: isUploading ? 'none' : '0 2px 6px rgba(131, 58, 180, 0.3)', minHeight: '65px' }} onMouseEnter={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 10px rgba(131, 58, 180, 0.5)' } }} onMouseLeave={(e) => { if (!isUploading) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(131, 58, 180, 0.3)' } }}>
+              <span style={{ fontSize: '1.3rem' }}>📷</span>
+              <span style={{ fontSize: '0.75rem' }}>{t?.share?.instagram || 'Instagram'}</span>
             </button>
           </div>
         </div>
