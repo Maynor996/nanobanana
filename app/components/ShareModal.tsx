@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface ShareModalProps {
   isOpen: boolean
@@ -14,6 +14,14 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
   const [isUploading, setIsUploading] = useState(false)
   const [shareUrl, setShareUrl] = useState<string>('')
   const [uploadError, setUploadError] = useState<string>('')
+  const [canShareNatively, setCanShareNatively] = useState(false)
+
+  // 检测是否支持原生分享
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.share) {
+      setCanShareNatively(true)
+    }
+  }, [])
 
   if (!isOpen) return null
 
@@ -151,63 +159,101 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
     window.open('https://t.bilibili.com/', '_blank')
   }
 
+  // 原生分享（移动端）
+  const shareNatively = async (platform: string, text: string) => {
+    try {
+      // 将base64转换为Blob
+      const base64Response = await fetch(`data:${mimeType};base64,${imageData}`)
+      const blob = await base64Response.blob()
+      const file = new File([blob], `nano-banana-${Date.now()}.png`, { type: mimeType })
+
+      // 检查是否可以分享文件
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Nano Banana AI Image',
+          text: text,
+          files: [file]
+        })
+      } else {
+        // 降级处理：复制文案+下载图片
+        await navigator.clipboard.writeText(text)
+        downloadImage()
+        alert(`图片已下载，文案已复制！\n\n请在${platform}中粘贴文案并上传图片。`)
+      }
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') {
+        // 用户取消分享，不显示错误
+        return
+      }
+      console.error('分享失败:', err)
+      // 降级处理
+      try {
+        await navigator.clipboard.writeText(text)
+        downloadImage()
+        alert(`图片已下载，文案已复制！\n\n请在${platform}中粘贴文案并上传图片。`)
+      } catch (e) {
+        console.error('降级分享失败:', e)
+      }
+    }
+  }
+
   // 分享到抖音
   const shareToDouyin = async () => {
-    const url = await uploadAndGetLink()
-    if (!url) {
-      alert(t?.share?.uploadFailed || '上传失败，请重试')
-      return
-    }
-
     const shareText = `使用 Nano Banana 免费生成的AI图片！🍌✨\n\n100% 免费 | 无需登录 | 无限生成\n\n🔗 https://nanobanana-free.top/nano`
 
-    try {
-      await navigator.clipboard.writeText(shareText)
-      // 先下载图片
-      downloadImage()
-      alert('图片已下载，文案已复制！\n\n请在抖音APP中上传图片并粘贴文案发布。')
-    } catch (err) {
-      console.error('复制失败:', err)
+    if (canShareNatively) {
+      // 移动端：使用原生分享
+      await shareNatively('抖音', shareText)
+    } else {
+      // 桌面端：上传链接+复制文案+下载图片
+      const url = await uploadAndGetLink()
+      try {
+        await navigator.clipboard.writeText(shareText + (url ? `\n\n图片链接：${url}` : ''))
+        downloadImage()
+        alert('图片已下载，文案已复制！\n\n请在抖音APP中上传图片并粘贴文案发布。')
+      } catch (err) {
+        console.error('复制失败:', err)
+      }
     }
   }
 
   // 分享到TikTok
   const shareToTikTok = async () => {
-    const url = await uploadAndGetLink()
-    if (!url) {
-      alert(t?.share?.uploadFailed || '上传失败，请重试')
-      return
-    }
-
     const shareText = `AI-generated image by Nano Banana! 🍌✨\n\n100% Free | No Login | Unlimited\n\n🔗 https://nanobanana-free.top/nano`
 
-    try {
-      await navigator.clipboard.writeText(shareText)
-      // 先下载图片
-      downloadImage()
-      alert('Image downloaded, caption copied!\n\nPlease upload the image in TikTok app and paste the caption.')
-    } catch (err) {
-      console.error('复制失败:', err)
+    if (canShareNatively) {
+      // 移动端：使用原生分享
+      await shareNatively('TikTok', shareText)
+    } else {
+      // 桌面端：上传链接+复制文案+下载图片
+      const url = await uploadAndGetLink()
+      try {
+        await navigator.clipboard.writeText(shareText + (url ? `\n\nImage: ${url}` : ''))
+        downloadImage()
+        alert('Image downloaded, caption copied!\n\nPlease upload the image in TikTok app and paste the caption.')
+      } catch (err) {
+        console.error('Copy failed:', err)
+      }
     }
   }
 
   // 分享到Instagram
   const shareToInstagram = async () => {
-    const url = await uploadAndGetLink()
-    if (!url) {
-      alert(t?.share?.uploadFailed || '上传失败，请重试')
-      return
-    }
-
     const shareText = `AI-generated image by Nano Banana! 🍌✨\n\n100% Free | No Login | Unlimited\n\n🔗 https://nanobanana-free.top/nano`
 
-    try {
-      await navigator.clipboard.writeText(shareText)
-      // 先下载图片
-      downloadImage()
-      alert('Image downloaded, caption copied!\n\nPlease upload the image in Instagram app and paste the caption.')
-    } catch (err) {
-      console.error('复制失败:', err)
+    if (canShareNatively) {
+      // 移动端：使用原生分享
+      await shareNatively('Instagram', shareText)
+    } else {
+      // 桌面端：上传链接+复制文案+下载图片
+      const url = await uploadAndGetLink()
+      try {
+        await navigator.clipboard.writeText(shareText + (url ? `\n\nImage: ${url}` : ''))
+        downloadImage()
+        alert('Image downloaded, caption copied!\n\nPlease upload the image in Instagram app and paste the caption.')
+      } catch (err) {
+        console.error('Copy failed:', err)
+      }
     }
   }
 
