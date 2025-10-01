@@ -119,6 +119,28 @@ export const translations = {
       copiedMessage: '图片链接已复制到剪贴板！'
     },
 
+    // Share Modal
+    share: {
+      title: '分享图片',
+      uploading: '正在上传图片...',
+      uploadFailed: '上传失败',
+      uploadFailedMsg: '上传失败，请重试',
+      quickActions: '快速操作',
+      download: '下载图片',
+      copyLink: '复制链接',
+      socialPlatforms: '分享到社交平台',
+      wechat: '微信',
+      xiaohongshu: '小红书',
+      bilibili: 'B站',
+      linkReady: '链接已生成',
+      linkCopied: '链接已复制到剪贴板！',
+      tiktokTip: '请下载图片后，在TikTok中手动上传发布',
+      instagramTip: '请下载图片后，在Instagram中手动上传发布',
+      xiaohongshuTip: '请下载图片后，在小红书中手动上传发布',
+      bilibiliTip: '请下载图片后，在B站动态中手动上传发布',
+      tip: '提示：X平台和微信支持直接分享链接，其他平台需下载后手动上传图片。'
+    },
+
     // Error Messages
     error: {
       title: '生成失败',
@@ -300,6 +322,28 @@ export const translations = {
       copyText: '📋 Copy Text',
       copied: 'Copied',
       copiedMessage: 'Image link copied to clipboard!'
+    },
+
+    // Share Modal
+    share: {
+      title: 'Share Image',
+      uploading: 'Uploading image...',
+      uploadFailed: 'Upload failed',
+      uploadFailedMsg: 'Upload failed, please try again',
+      quickActions: 'Quick Actions',
+      download: 'Download Image',
+      copyLink: 'Copy Link',
+      socialPlatforms: 'Share to Social Platforms',
+      wechat: 'WeChat',
+      xiaohongshu: 'Xiaohongshu',
+      bilibili: 'Bilibili',
+      linkReady: 'Link ready',
+      linkCopied: 'Link copied to clipboard!',
+      tiktokTip: 'Please download the image and manually upload it on TikTok',
+      instagramTip: 'Please download the image and manually upload it on Instagram',
+      xiaohongshuTip: 'Please download the image and manually upload it on Xiaohongshu',
+      bilibiliTip: 'Please download the image and manually upload it on Bilibili',
+      tip: 'Tip: X and WeChat support direct link sharing. Other platforms require downloading the image first.'
     },
 
     // Error Messages

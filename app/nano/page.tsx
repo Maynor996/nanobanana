@@ -5,6 +5,7 @@ import './nano.css'
 import { BannerAd, ResponsiveAd } from '../components/GoogleAds'
 import BrowserWarning from '../components/BrowserWarning'
 import { useLanguage } from '../i18n/LanguageContext'
+import ShareModal from '../components/ShareModal'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
@@ -26,6 +27,7 @@ export default function NanoPage() {
   const [showErrorModal, setShowErrorModal] = useState(false)
   const [errorModalTitle, setErrorModalTitle] = useState('')
   const [errorModalMessage, setErrorModalMessage] = useState('')
+  const [showShareModal, setShowShareModal] = useState(false)
 
   const quickPrompts = [
     { icon: '🏔️', text: '风景', value: '美丽的自然风景' },
@@ -1499,29 +1501,8 @@ export default function NanoPage() {
                 </button>
                 <button
                   onClick={() => {
-                    const img = document.getElementById('generated-image') as HTMLImageElement
-                    if (img && navigator.share) {
-                      fetch(img.src)
-                        .then(res => res.blob())
-                        .then(blob => {
-                          const file = new File([blob], 'gemini-generated.png', { type: 'image/png' })
-                          navigator.share({
-                            title: 'Gemini 生成的图片',
-                            text: '分享我的AI生成图片',
-                            files: [file]
-                          })
-                        })
-                        .catch(err => {
-                          console.error('分享失败:', err)
-                          // 如果分享失败，回退到复制链接
-                          navigator.clipboard.writeText(img.src)
-                          showError('复制成功', '图片链接已复制到剪贴板')
-                        })
-                    } else {
-                      // 复制图片URL到剪贴板
-                      navigator.clipboard.writeText(img.src)
-                      alert('图片链接已复制到剪贴板')
-                    }
+                    // 打开分享弹窗
+                    setShowShareModal(true)
                   }}
                   style={{
                     padding: '0.75rem 1.5rem',
@@ -2007,6 +1988,17 @@ export default function NanoPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Modal */}
+      {result && result.imageData && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          imageData={result.imageData}
+          mimeType={result.mimeType || 'image/png'}
+          t={t}
+        />
       )}
     </div>
   )
