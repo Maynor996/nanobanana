@@ -109,13 +109,23 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
     window.open(qrUrl, '_blank', 'width=500,height=500')
   }
 
-  // 复制链接
+  // 复制链接 - 改为生成并显示链接
   const copyLink = async () => {
-    const url = shareUrl || await uploadAndGetLink()
+    if (shareUrl) {
+      // 如果已有链接，直接复制
+      await navigator.clipboard.writeText(shareUrl)
+      alert(t?.share?.linkCopied || '链接已复制到剪贴板！')
+      return
+    }
+
+    // 上传并生成链接
+    const url = await uploadAndGetLink()
     if (!url) {
       alert(t?.share?.uploadFailedMsg || '上传失败，请重试')
       return
     }
+
+    // 自动复制到剪贴板
     await navigator.clipboard.writeText(url)
     alert(t?.share?.linkCopied || '链接已复制到剪贴板！')
   }
