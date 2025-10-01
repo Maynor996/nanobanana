@@ -1530,40 +1530,6 @@ export default function NanoPage() {
                 >
                   {t.result.share}
                 </button>
-                <button
-                  onClick={() => {
-                    const img = document.getElementById('generated-image') as HTMLImageElement
-                    if (img) {
-                      navigator.clipboard.writeText(img.src)
-                      showError(t.result.copied, t.result.copiedMessage)
-                    }
-                  }}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.75rem',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'none'
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)'
-                  }}
-                >
-                  {t.result.copy}
-                </button>
               </div>
             </div>
           ) : result.text || result.content || result.message ? (

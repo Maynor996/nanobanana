@@ -128,11 +128,14 @@ export const translations = {
       generateLink: '生成分享链接',
       linkReady: '链接已生成',
       linkCopied: '链接已复制到剪贴板！',
+      directShare: '直接分享到',
+      twitter: 'X (Twitter)',
+      jike: '即刻',
       howToUse: '使用说明',
       downloadFor: '下载图片后可分享到：',
       downloadPlatforms: '小红书、抖音、B站、Instagram、TikTok 等平台',
       linkFor: '生成链接后可用于：',
-      linkPlatforms: 'X(Twitter)、微信、网页、论坛 等支持链接的平台'
+      linkPlatforms: 'X(Twitter)、即刻、微信、网页、论坛 等支持链接的平台'
     },
 
     // Error Messages
@@ -327,11 +330,14 @@ export const translations = {
       generateLink: 'Generate Share Link',
       linkReady: 'Link ready',
       linkCopied: 'Link copied to clipboard!',
+      directShare: 'Share Directly to',
+      twitter: 'X (Twitter)',
+      jike: 'Jike',
       howToUse: 'How to Use',
       downloadFor: 'Download image to share on:',
       downloadPlatforms: 'Xiaohongshu, Douyin, Bilibili, Instagram, TikTok, etc.',
       linkFor: 'Generated link can be used on:',
-      linkPlatforms: 'X(Twitter), WeChat, Websites, Forums, etc.'
+      linkPlatforms: 'X(Twitter), Jike, WeChat, Websites, Forums, etc.'
     },
 
     // Error Messages

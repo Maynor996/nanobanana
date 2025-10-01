@@ -27,13 +27,10 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
     document.body.removeChild(link)
   }
 
-  // 生成分享链接
-  const generateShareLink = async () => {
+  // 上传图片并获取链接（内部辅助函数）
+  const uploadAndGetLink = async (): Promise<string | null> => {
     if (shareUrl) {
-      // 如果已有链接，直接复制
-      await navigator.clipboard.writeText(shareUrl)
-      alert(t?.share?.linkCopied || '链接已复制到剪贴板！')
-      return
+      return shareUrl
     }
 
     setIsUploading(true)
@@ -55,18 +52,51 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
 
       if (response.ok && data.success) {
         setShareUrl(data.url)
-        // 自动复制到剪贴板
-        await navigator.clipboard.writeText(data.url)
-        alert(t?.share?.linkCopied || '链接已复制到剪贴板！')
+        return data.url
       } else {
         setUploadError(data.error || '上传失败')
+        return null
       }
     } catch (error) {
       console.error('上传失败:', error)
       setUploadError(t?.share?.uploadFailed || '上传失败，请重试')
+      return null
     } finally {
       setIsUploading(false)
     }
+  }
+
+  // 生成分享链接（复制到剪贴板）
+  const generateShareLink = async () => {
+    const url = await uploadAndGetLink()
+    if (url) {
+      await navigator.clipboard.writeText(url)
+      alert(t?.share?.linkCopied || '链接已复制到剪贴板！')
+    }
+  }
+
+  // 分享到X (Twitter)
+  const shareToTwitter = async () => {
+    const url = await uploadAndGetLink()
+    if (!url) {
+      alert(t?.share?.uploadFailed || '上传失败，请重试')
+      return
+    }
+    const text = encodeURIComponent('使用 Nano Banana 免费生成的AI图片！🍌✨\n\n100% 免费 | 无需登录 | 无限生成')
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank')
+  }
+
+  // 分享到即刻
+  const shareToJike = async () => {
+    const url = await uploadAndGetLink()
+    if (!url) {
+      alert(t?.share?.uploadFailed || '上传失败，请重试')
+      return
+    }
+    // 即刻的分享方式：直接打开即刻并附带图片链接
+    const text = encodeURIComponent(`使用 Nano Banana 免费生成的AI图片！🍌✨\n\n${url}\n\n100% 免费 | 无需登录 | 无限生成`)
+    // 即刻支持网页版发布，打开发布页面
+    window.open(`https://web.okjike.com/post?text=${text}`, '_blank')
   }
 
   return (
@@ -201,7 +231,7 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
         )}
 
         {/* 主要操作按钮 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
           <button
             onClick={downloadImage}
             style={{
@@ -273,6 +303,88 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
             <span style={{ fontSize: '2rem' }}>🔗</span>
             <span>{t?.share?.generateLink || '生成分享链接'}</span>
           </button>
+        </div>
+
+        {/* 直接分享到平台 */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h4 style={{ fontSize: '0.9rem', color: '#888', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {t?.share?.directShare || '直接分享到'}
+          </h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <button
+              onClick={shareToTwitter}
+              disabled={isUploading}
+              style={{
+                padding: '0.75rem',
+                background: isUploading ? '#333' : 'linear-gradient(135deg, #000000, #333333)',
+                color: isUploading ? '#666' : 'white',
+                border: 'none',
+                borderRadius: '0.75rem',
+                cursor: isUploading ? 'not-allowed' : 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: '600',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                opacity: isUploading ? 0.5 : 1,
+                boxShadow: isUploading ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                if (!isUploading) {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isUploading) {
+                  e.currentTarget.style.transform = 'none'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)'
+                }
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>𝕏</span>
+              <span>{t?.share?.twitter || 'X (Twitter)'}</span>
+            </button>
+
+            <button
+              onClick={shareToJike}
+              disabled={isUploading}
+              style={{
+                padding: '0.75rem',
+                background: isUploading ? '#333' : 'linear-gradient(135deg, #FFE411, #FFC700)',
+                color: isUploading ? '#666' : '#000',
+                border: 'none',
+                borderRadius: '0.75rem',
+                cursor: isUploading ? 'not-allowed' : 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: '600',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                opacity: isUploading ? 0.5 : 1,
+                boxShadow: isUploading ? 'none' : '0 2px 8px rgba(255, 228, 17, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                if (!isUploading) {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 228, 17, 0.5)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isUploading) {
+                  e.currentTarget.style.transform = 'none'
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 228, 17, 0.3)'
+                }
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>🟡</span>
+              <span>{t?.share?.jike || '即刻'}</span>
+            </button>
+          </div>
         </div>
 
         {/* 使用说明 */}
