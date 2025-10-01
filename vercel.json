@@ -3,5 +3,30 @@
     "app/api/**/*.ts": {
       "maxDuration": 60
     }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "images": {
+    "domains": [],
+    "formats": ["image/avif", "image/webp"],
+    "minimumCacheTTL": 31536000
   }
 }
