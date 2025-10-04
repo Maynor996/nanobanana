@@ -1,3 +1,4 @@
+import './globals.css'
 import { LanguageProvider } from './i18n/LanguageContext'
 
 export const metadata = {

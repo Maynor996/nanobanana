@@ -18,7 +18,7 @@ export default function ShareModal({ isOpen, onClose, imageData, mimeType, t }: 
 
   // 检测是否支持原生分享
   useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.share) {
+    if (typeof window !== 'undefined' && typeof navigator.share === 'function') {
       setCanShareNatively(true)
     }
   }, [])
