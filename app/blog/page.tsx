@@ -19,7 +19,7 @@ const blogPosts = [
     date: '2025年1月',
     readTime: '15分钟',
     category: '进阶技巧',
-    link: '/tutorials/beginner-guide'
+    link: '/prompt-templates'
   },
   {
     id: 'style-guide',
@@ -37,7 +37,7 @@ const blogPosts = [
     date: '2025年1月',
     readTime: '18分钟',
     category: '图像编辑',
-    link: '/tutorials/beginner-guide'
+    link: '/use-cases'
   },
   {
     id: 'inspiration-gallery',
@@ -55,7 +55,7 @@ const blogPosts = [
     date: '2025年1月',
     readTime: '14分钟',
     category: '技术对比',
-    link: '/tutorials/beginner-guide'
+    link: '/models-comparison'
   }
 ];
 
