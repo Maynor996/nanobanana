@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import './nano.css'
-import { BannerAd, ResponsiveAd } from '../components/GoogleAds'
 import BrowserWarning from '../components/BrowserWarning'
 import { useLanguage } from '../i18n/LanguageContext'
 import ShareModal from '../components/ShareModal'
@@ -1596,9 +1595,53 @@ export default function NanoPage() {
         </div>
       )}
 
-      {/* 底部自适应广告 */}
-      <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
-        <ResponsiveAd style={{ maxWidth: '1200px', width: '100%' }} />
+      {/* 赞赏码部分 */}
+      <div style={{
+        marginTop: '4rem',
+        padding: '2rem',
+        backgroundColor: '#0a0a0a',
+        borderRadius: '1.5rem',
+        border: '1px solid #222',
+        textAlign: 'center'
+      }}>
+        <h2 style={{
+          fontSize: '1.8rem',
+          fontWeight: 'bold',
+          marginBottom: '1rem',
+          background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          💝 支持开发者
+        </h2>
+        <p style={{
+          color: '#888',
+          fontSize: '1rem',
+          marginBottom: '2rem',
+          lineHeight: '1.6'
+        }}>
+          如果您觉得这个工具有帮助，欢迎扫码支持开发者！<br />
+          您的支持是我继续开发的最大动力 😊
+        </p>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: '1rem'
+        }}>
+          <img
+            src="/appreciation-code.jpg"
+            alt="赞赏码"
+            style={{
+              maxWidth: '400px',
+              width: '100%',
+              height: 'auto',
+              borderRadius: '1rem',
+              boxShadow: '0 10px 30px rgba(251, 191, 36, 0.2)',
+              border: '2px solid rgba(251, 191, 36, 0.3)'
+            }}
+          />
+        </div>
       </div>
 
       {/* 使用示例部分 */}
