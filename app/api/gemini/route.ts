@@ -13,7 +13,7 @@ async function geminiHandler(request: NextRequest) {
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.MAYNOR_API_KEY
     const apiUrl = process.env.MAYNOR_API_URL || 'https://apipro.maynor1024.live'
-    const model = 'gemini-2.5-flash-image-preview'
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-image'
 
     if (!apiKey) {
       return NextResponse.json({ error: 'API配置缺失' }, { status: 500 })

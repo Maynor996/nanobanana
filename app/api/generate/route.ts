@@ -18,8 +18,8 @@ async function generateHandler(request: NextRequest) {
       return NextResponse.json({ error: 'API配置缺失' }, { status: 500 })
     }
 
-    // 使用 Gemini 2.5 Flash Image Preview 模型
-    const model = 'gemini-2.5-flash-image-preview'
+    // 从环境变量获取模型名称，默认使用 Gemini 2.5 Flash Image
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-image'
     
     // 使用正确的API格式
     const response = await fetch(
