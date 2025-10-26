@@ -10,6 +10,16 @@ interface AdAnalyticsData {
     ctr: number
     cpm: number
     date: string
+    googleAdsense?: {
+      impressions: number
+      clicks: number
+      revenue: number
+    }
+    adsterra?: {
+      impressions: number
+      clicks: number
+      revenue: number
+    }
   }>
   summary: {
     totalImpressions: number
@@ -18,6 +28,16 @@ interface AdAnalyticsData {
     averageCTR: number
     averageCPM: number
     period: string
+    googleAdsense?: {
+      revenue: number
+      impressions: number
+      clicks: number
+    }
+    adsterra?: {
+      revenue: number
+      impressions: number
+      clicks: number
+    }
   }
 }
 
@@ -160,6 +180,7 @@ export default function AdAnalytics() {
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: '1rem'
       }}>
+        {/* 总收入卡片 */}
         <div style={{
           backgroundColor: '#1a1a2e',
           padding: '1rem',
@@ -171,8 +192,13 @@ export default function AdAnalytics() {
           <div style={{ color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>
             ¥{analytics.summary.totalRevenue.toFixed(2)}
           </div>
+          <div style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.25rem' }}>
+            Google: ¥{analytics.summary.googleAdsense?.revenue?.toFixed(2) || '0.00'} |
+            Adsterra: ¥{analytics.summary.adsterra?.revenue?.toFixed(2) || '0.00'}
+          </div>
         </div>
 
+        {/* 总展示量卡片 */}
         <div style={{
           backgroundColor: '#1a2e1a',
           padding: '1rem',
@@ -184,8 +210,13 @@ export default function AdAnalytics() {
           <div style={{ color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>
             {analytics.summary.totalImpressions.toLocaleString()}
           </div>
+          <div style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.25rem' }}>
+            Google: {analytics.summary.googleAdsense?.impressions?.toLocaleString() || '0'} |
+            Adsterra: {analytics.summary.adsterra?.impressions?.toLocaleString() || '0'}
+          </div>
         </div>
 
+        {/* 总点击量卡片 */}
         <div style={{
           backgroundColor: '#2e1a1a',
           padding: '1rem',
@@ -197,8 +228,13 @@ export default function AdAnalytics() {
           <div style={{ color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>
             {analytics.summary.totalClicks.toLocaleString()}
           </div>
+          <div style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.25rem' }}>
+            Google: {analytics.summary.googleAdsense?.clicks?.toLocaleString() || '0'} |
+            Adsterra: {analytics.summary.adsterra?.clicks?.toLocaleString() || '0'}
+          </div>
         </div>
 
+        {/* 平均点击率卡片 */}
         <div style={{
           backgroundColor: '#2e2e1a',
           padding: '1rem',
@@ -209,6 +245,40 @@ export default function AdAnalytics() {
           <div style={{ color: '#888', fontSize: '0.9rem' }}>平均点击率</div>
           <div style={{ color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>
             {analytics.summary.averageCTR}%
+          </div>
+        </div>
+
+        {/* Google AdSense 专项 */}
+        <div style={{
+          backgroundColor: '#1a2e2e',
+          padding: '1rem',
+          borderRadius: '0.5rem',
+          border: '1px solid #4285F4'
+        }}>
+          <div style={{ color: '#4285F4', fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔍</div>
+          <div style={{ color: '#888', fontSize: '0.9rem' }}>Google AdSense</div>
+          <div style={{ color: 'white', fontSize: '1.2rem', fontWeight: 'bold' }}>
+            ¥{analytics.summary.googleAdsense?.revenue?.toFixed(2) || '0.00'}
+          </div>
+          <div style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.25rem' }}>
+            {analytics.summary.googleAdsense?.impressions?.toLocaleString() || '0'} 展示
+          </div>
+        </div>
+
+        {/* Adsterra 专项 */}
+        <div style={{
+          backgroundColor: '#2e1a1a',
+          padding: '1rem',
+          borderRadius: '0.5rem',
+          border: '1px solid #ff6b6b'
+        }}>
+          <div style={{ color: '#ff6b6b', fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔴</div>
+          <div style={{ color: '#888', fontSize: '0.9rem' }}>Adsterra</div>
+          <div style={{ color: 'white', fontSize: '1.2rem', fontWeight: 'bold' }}>
+            ¥{analytics.summary.adsterra?.revenue?.toFixed(2) || '0.00'}
+          </div>
+          <div style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.25rem' }}>
+            {analytics.summary.adsterra?.impressions?.toLocaleString() || '0'} 展示
           </div>
         </div>
       </div>
@@ -226,8 +296,8 @@ export default function AdAnalytics() {
           📅 每日明细
         </h3>
         
-        <div style={{ 
-          backgroundColor: '#0a0a0a', 
+        <div style={{
+          backgroundColor: '#0a0a0a',
           borderRadius: '0.5rem',
           overflow: 'hidden',
           border: '1px solid #333'
@@ -236,15 +306,16 @@ export default function AdAnalytics() {
             <thead>
               <tr style={{ backgroundColor: '#222' }}>
                 <th style={{ padding: '0.75rem', textAlign: 'left', color: '#888', fontSize: '0.9rem' }}>日期</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#888', fontSize: '0.9rem' }}>展示量</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#888', fontSize: '0.9rem' }}>点击量</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#888', fontSize: '0.9rem' }}>收入 (¥)</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#888', fontSize: '0.9rem' }}>点击率</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#888', fontSize: '0.9rem' }}>总展示</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#4285F4', fontSize: '0.9rem' }}>Google</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#ff6b6b', fontSize: '0.9rem' }}>Adsterra</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#8b5cf6', fontSize: '0.9rem' }}>总收入 (¥)</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right', color: '#ffa500', fontSize: '0.9rem' }}>点击率</th>
               </tr>
             </thead>
             <tbody>
               {analytics.daily.map((day, index) => (
-                <tr key={day.date} style={{ 
+                <tr key={day.date} style={{
                   borderTop: index > 0 ? '1px solid #333' : 'none',
                   backgroundColor: index % 2 === 0 ? 'transparent' : '#111'
                 }}>
@@ -254,8 +325,11 @@ export default function AdAnalytics() {
                   <td style={{ padding: '0.75rem', textAlign: 'right', color: '#10b981', fontSize: '0.9rem' }}>
                     {day.impressions.toLocaleString()}
                   </td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right', color: '#ef4444', fontSize: '0.9rem' }}>
-                    {day.clicks.toLocaleString()}
+                  <td style={{ padding: '0.75rem', textAlign: 'right', color: '#4285F4', fontSize: '0.9rem' }}>
+                    {day.googleAdsense?.impressions?.toLocaleString() || '0'}
+                  </td>
+                  <td style={{ padding: '0.75rem', textAlign: 'right', color: '#ff6b6b', fontSize: '0.9rem' }}>
+                    {day.adsterra?.impressions?.toLocaleString() || '0'}
                   </td>
                   <td style={{ padding: '0.75rem', textAlign: 'right', color: '#8b5cf6', fontSize: '0.9rem' }}>
                     {day.revenue.toFixed(2)}
