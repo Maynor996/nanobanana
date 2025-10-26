@@ -13,30 +13,43 @@ export default function AdsterraDirectLink() {
     const isProduction = process.env.NODE_ENV === 'production'
     const adsterraEnabled = process.env.NEXT_PUBLIC_ADSTERRA_ENABLED === 'true'
 
+    // 检查是否配置了有效的广告密钥
+    const adKey = process.env.NEXT_PUBLIC_ADSTERRA_DIRECT_LINK_KEY
+    const hasValidKey = adKey && adKey !== 'your_adsterra_direct_link_key' && adKey.trim() !== ''
+
     // 在开发环境显示调试信息
     if (!isProduction) {
       setShowDevInfo(true)
       console.log('🔴 Adsterra Direct Link: 开发环境')
-      console.log('链接: https://www.effectivegatecpm.com/vdsi8t1uj?key=ef0ced4cde2c993dd97e189dd4946cf5')
       console.log('启用状态:', adsterraEnabled ? '已启用' : '未启用')
+      console.log('广告密钥配置:', hasValidKey ? '已配置' : '未配置')
       return
     }
 
     if (!adsterraEnabled) {
-      console.log('Adsterra Direct Link: 未启用')
+      console.log('Adsterra Direct Link: 广告未启用')
       return
     }
+
+    if (!hasValidKey) {
+      console.warn('Adsterra Direct Link: 缺少有效的广告密钥配置')
+      return
+    }
+
+    // 构建广告URL
+    const adUrl = `https://www.effectivegatecpm.com/${adKey}?key=ef0ced4cde2c993dd97e189dd4946cf5`
 
     // 创建并添加 Adsterra Direct Link 脚本
     const script = document.createElement('script')
     script.type = 'text/javascript'
-    script.src = 'https://www.effectivegatecpm.com/vdsi8t1uj?key=ef0ced4cde2c993dd97e189dd4946cf5'
+    script.src = adUrl
     script.async = true
     script.setAttribute('data-cfasync', 'false')
 
     // 添加错误处理
-    script.onerror = () => {
-      console.error('Adsterra Direct Link 加载失败')
+    script.onerror = (error) => {
+      console.error('Adsterra Direct Link 加载失败:', error)
+      console.warn('请检查广告密钥配置是否正确，或网络连接是否正常')
     }
 
     script.onload = () => {
@@ -71,10 +84,13 @@ export default function AdsterraDirectLink() {
       }}>
         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>🔴 Adsterra Direct Link (开发模式)</div>
         <div style={{ fontSize: '10px', opacity: 0.9 }}>
-          生产环境将加载: effectivegatecpm.com/vdsi8t1uj
+          广告状态: {process.env.NEXT_PUBLIC_ADSTERRA_ENABLED === 'true' ? '已启用' : '已禁用'}
+        </div>
+        <div style={{ fontSize: '10px', opacity: 0.9 }}>
+          密钥配置: {process.env.NEXT_PUBLIC_ADSTERRA_DIRECT_LINK_KEY && process.env.NEXT_PUBLIC_ADSTERRA_DIRECT_LINK_KEY !== 'your_adsterra_direct_link_key' ? '已配置' : '未配置'}
         </div>
         <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.8 }}>
-          启用: {process.env.NEXT_PUBLIC_ADSTERRA_ENABLED === 'true' ? '✓' : '✗'}
+          当前错误: 已禁用以避免加载失败
         </div>
       </div>
     )

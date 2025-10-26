@@ -1,6 +1,7 @@
 import './globals.css'
 import { LanguageProvider } from './i18n/LanguageContext'
 import AdsterraDirectLink from './components/AdsterraDirectLink'
+import SmartlinksAd from './components/SmartlinksAd'
 
 export const metadata = {
   title: 'Nano Banana - AI图像生成器 | AI Image Generator',
@@ -29,6 +30,7 @@ export default function RootLayout({
 }) {
   const adsenseId = process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID
   const adsterraEnabled = process.env.NEXT_PUBLIC_ADSTERRA_ENABLED === 'true'
+  const smartlinksEnabled = process.env.NEXT_PUBLIC_SMARTLINKS_ENABLED === 'true'
   const isProduction = process.env.NODE_ENV === 'production'
   const isValidAdsenseId = adsenseId && adsenseId !== 'ca-pub-xxxxxxxxxxxxxxxxx' && adsenseId !== 'ca-pub-1500176085727924'
 
@@ -58,6 +60,9 @@ export default function RootLayout({
         </LanguageProvider>
         {/* Adsterra Direct Link 广告 */}
         <AdsterraDirectLink />
+
+        {/* Smartlinks 广告 */}
+        <SmartlinksAd />
       </body>
     </html>
   )
