@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 declare global {
   interface Window {
     Microsoft: any
+    uq_params: any[]
   }
 }
 
@@ -90,7 +91,7 @@ export default function MicrosoftAds({
         textAlign: 'center',
         minHeight: '100px',
         backgroundColor: '#111',
-        border: '1px solid '#333',
+        border: '1px solid #333',
         borderRadius: '0.5rem',
         overflow: 'hidden',
         ...style
@@ -183,6 +184,7 @@ export function MicrosoftUETTag({ uetId }: UETTagProps) {
   useEffect(() => {
     // Microsoft UET 标签设置
     if (typeof window !== 'undefined') {
+      // @ts-ignore - Microsoft UET tracking code
       (function(w,d,t,r,u){var f,n,i;w[u]=w[u]||[],f=function(){var o={ti:uetId, enableAutoSpaTracking: true};w[u].push(o)},n=d.createElement(t),n.src=r,n.async=1,n.onload=n.onreadystatechange=function(){var s=this.readyState;s&&s!=="loaded"&&s!=="complete"||(f(),n.onload=n.onreadystatechange=null,w[u]=push)};i=d.getElementsByTagName(t)[0],i.parentNode.insertBefore(n,i)})(window,document,"script","//bat.bing.com/bat.js","uetq");
     }
   }, [uetId])
@@ -190,7 +192,7 @@ export function MicrosoftUETTag({ uetId }: UETTagProps) {
   return (
     <noscript>
       <img
-        src="//bat.bing.com/action/0?ti=" + uetId + "&Ver=2"
+        src={`//bat.bing.com/action/0?ti=${uetId}&Ver=2`}
         height="0"
         width="0"
         style={{display:'none',visibility:'hidden'}}

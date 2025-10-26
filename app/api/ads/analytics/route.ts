@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
+interface AdPlatformMetrics {
+  impressions: number
+  clicks: number
+  revenue: number
+}
+
 interface AdAnalytics {
   impressions: number
   clicks: number
@@ -9,6 +15,8 @@ interface AdAnalytics {
   ctr: number // Click Through Rate
   cpm: number // Cost Per Mille
   date: string
+  googleAdsense?: AdPlatformMetrics
+  adsterra?: AdPlatformMetrics
 }
 
 // 模拟广告收入数据 - 实际项目中应从 Google AdSense API 和 Adsterra API 获取
