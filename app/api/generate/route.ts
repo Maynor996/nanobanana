@@ -5,22 +5,26 @@ export const maxDuration = 60
 
 async function generateHandler(request: NextRequest) {
   try {
-    const { prompt } = await request.json()
-    
+    const { prompt, apiKey: customApiKey, apiUrl: customApiUrl } = await request.json()
+
     if (!prompt) {
       return NextResponse.json({ error: '请提供描述' }, { status: 400 })
     }
 
-    const apiKey = process.env.MAYNOR_API_KEY
-    const apiUrl = process.env.MAYNOR_API_URL || 'https://apipro.maynor1024.live'
+    // 优先使用前端传来的自定义配置，否则使用环境变量
+    const apiKey = customApiKey || process.env.MAYNOR_API_KEY
+    const apiUrl = customApiUrl || process.env.MAYNOR_API_URL || 'https://apipro.maynor1024.live'
 
     if (!apiKey) {
-      return NextResponse.json({ error: 'API配置缺失' }, { status: 500 })
+      return NextResponse.json({ error: 'API配置缺失，请在页面右上角配置 API 密钥' }, { status: 500 })
     }
 
     // 从环境变量获取模型名称，默认使用 Gemini 2.5 Flash Image
     const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-image'
-    
+
+    console.log('使用 API URL:', apiUrl)
+    console.log('使用模型:', model)
+
     // 使用正确的API格式
     const response = await fetch(
       `${apiUrl}/v1/chat/completions`,

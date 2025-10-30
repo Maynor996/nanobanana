@@ -5,19 +5,23 @@ export const maxDuration = 60
 
 async function geminiHandler(request: NextRequest) {
   try {
-    const { prompt, imageData, imageDataArray } = await request.json()
+    const { prompt, imageData, imageDataArray, apiKey: customApiKey, apiUrl: customApiUrl } = await request.json()
 
     if (!prompt) {
       return NextResponse.json({ error: '请提供描述' }, { status: 400 })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.MAYNOR_API_KEY
-    const apiUrl = process.env.MAYNOR_API_URL || 'https://apipro.maynor1024.live'
+    // 优先使用前端传来的自定义配置，否则使用环境变量
+    const apiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.MAYNOR_API_KEY
+    const apiUrl = customApiUrl || process.env.MAYNOR_API_URL || 'https://apipro.maynor1024.live'
     const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-image'
 
     if (!apiKey) {
-      return NextResponse.json({ error: 'API配置缺失' }, { status: 500 })
+      return NextResponse.json({ error: 'API配置缺失，请在页面右上角配置 API 密钥' }, { status: 500 })
     }
+
+    console.log('Gemini 使用 API URL:', apiUrl)
+    console.log('使用模型:', model)
 
     // 构建请求内容 - 根据maynor API文档格式
     const parts: any[] = []

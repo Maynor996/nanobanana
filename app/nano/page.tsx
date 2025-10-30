@@ -5,6 +5,7 @@ import './nano.css'
 import BrowserWarning from '../components/BrowserWarning'
 import { useLanguage } from '../i18n/LanguageContext'
 import ShareModal from '../components/ShareModal'
+import { loadApiConfig, saveApiConfig, type ApiConfig } from '../lib/api-config'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
@@ -27,6 +28,8 @@ export default function NanoPage() {
   const [errorModalTitle, setErrorModalTitle] = useState('')
   const [errorModalMessage, setErrorModalMessage] = useState('')
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showApiConfig, setShowApiConfig] = useState(false)
+  const [apiConfig, setApiConfig] = useState<ApiConfig>(() => loadApiConfig())
 
   const quickPrompts = [
     { icon: '🏔️', text: '风景', value: '美丽的自然风景' },
@@ -239,6 +242,10 @@ export default function NanoPage() {
   }
 
   const handleGenerate = async () => {
+    // 调试：显示当前配置
+    console.log('🔍 当前 API 配置:', apiConfig)
+    console.log('🎯 选择的模型:', model)
+
     if (mode === 'text' && prompt.length < 3) {
       showError('输入提示', '请输入至少3个字符的描述')
       return
@@ -247,7 +254,7 @@ export default function NanoPage() {
       showError('上传提示', '请先上传图片')
       return
     }
-    
+
     if (isUploading) {
       showError('上传提示', '图片正在上传中，请稍候...')
       return
@@ -280,7 +287,7 @@ export default function NanoPage() {
       } else if (model === 'gemini' && mode === 'text') {
         apiEndpoint = '/api/generate'
       }
-      
+
       const requestBody = mode === 'text'
         ? { prompt: finalPrompt }
         : { prompt: finalPrompt, imageDataArray }
@@ -297,6 +304,29 @@ export default function NanoPage() {
 
       // 使用时间戳作为用户标识
       requestData.timestamp = Date.now()
+
+      // 始终传递 API 配置（后端会自动 fallback 到环境变量）
+      if (model === 'gemini') {
+        if (apiConfig.geminiApiKey) {
+          requestData.apiKey = apiConfig.geminiApiKey
+        }
+        if (apiConfig.geminiApiUrl) {
+          requestData.apiUrl = apiConfig.geminiApiUrl
+        }
+      } else if (model === 'doubao') {
+        if (apiConfig.doubaoApiKey) {
+          requestData.apiKey = apiConfig.doubaoApiKey
+        }
+        if (apiConfig.doubaoApiUrl) {
+          requestData.apiUrl = apiConfig.doubaoApiUrl
+        }
+      }
+
+      console.log('发送请求到:', apiEndpoint, '配置:', {
+        hasApiKey: !!requestData.apiKey,
+        apiUrl: requestData.apiUrl,
+        model
+      })
 
       const response = await fetch(apiEndpoint, {
         method: 'POST',
@@ -482,6 +512,34 @@ export default function NanoPage() {
               EN
             </button>
           </div>
+
+          {/* API Config Button */}
+          <button
+            onClick={() => setShowApiConfig(true)}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#1a1a1a',
+              color: '#888',
+              border: '1px solid #333',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#10b981'
+              e.currentTarget.style.color = '#10b981'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#333'
+              e.currentTarget.style.color = '#888'
+            }}
+          >
+            ⚙️ API配置
+          </button>
         </div>
 
         {/* Subtitle Features */}
@@ -1959,6 +2017,284 @@ export default function NanoPage() {
           mimeType={result.mimeType || 'image/png'}
           t={t}
         />
+      )}
+
+      {/* API Config Modal */}
+      {showApiConfig && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }} onClick={() => setShowApiConfig(false)}>
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            borderRadius: '1rem',
+            padding: '2rem',
+            maxWidth: '600px',
+            width: '100%',
+            border: '1px solid #333',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.5rem'
+            }}>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                color: '#10b981',
+                margin: 0
+              }}>
+                ⚙️ API 配置
+              </h2>
+              <button
+                onClick={() => setShowApiConfig(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#888',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <p style={{
+              color: '#888',
+              fontSize: '0.95rem',
+              marginBottom: '1.5rem',
+              lineHeight: '1.5'
+            }}>
+              配置自定义的 API 密钥和中转服务地址。留空则使用默认服务。
+              <br />
+              <a
+                href="https://apipro.maynor1024.live"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#10b981', textDecoration: 'underline' }}
+              >
+                点击这里获取 API Key →
+              </a>
+            </p>
+
+            {/* Gemini API Config */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{
+                color: '#10b981',
+                fontSize: '1.1rem',
+                marginBottom: '1rem'
+              }}>
+                Gemini API
+              </h3>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  color: '#ccc',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9rem'
+                }}>
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  value={apiConfig.geminiApiKey}
+                  onChange={(e) => setApiConfig({ ...apiConfig, geminiApiKey: e.target.value })}
+                  placeholder="从 apipro.maynor1024.live 获取"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: '#0a0a0a',
+                    border: '1px solid #333',
+                    borderRadius: '0.5rem',
+                    color: '#fff',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  color: '#ccc',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9rem'
+                }}>
+                  API URL
+                </label>
+                <input
+                  type="text"
+                  value={apiConfig.geminiApiUrl}
+                  onChange={(e) => setApiConfig({ ...apiConfig, geminiApiUrl: e.target.value })}
+                  placeholder="https://apipro.maynor1024.live"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: '#0a0a0a',
+                    border: '1px solid #333',
+                    borderRadius: '0.5rem',
+                    color: '#fff',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Doubao API Config */}
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{
+                color: '#10b981',
+                fontSize: '1.1rem',
+                marginBottom: '1rem'
+              }}>
+                Doubao API
+              </h3>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  color: '#ccc',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9rem'
+                }}>
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  value={apiConfig.doubaoApiKey}
+                  onChange={(e) => setApiConfig({ ...apiConfig, doubaoApiKey: e.target.value })}
+                  placeholder="从 apipro.maynor1024.live 获取"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: '#0a0a0a',
+                    border: '1px solid #333',
+                    borderRadius: '0.5rem',
+                    color: '#fff',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  color: '#ccc',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9rem'
+                }}>
+                  API URL
+                </label>
+                <input
+                  type="text"
+                  value={apiConfig.doubaoApiUrl}
+                  onChange={(e) => setApiConfig({ ...apiConfig, doubaoApiUrl: e.target.value })}
+                  placeholder="https://apipro.maynor1024.live"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: '#0a0a0a',
+                    border: '1px solid #333',
+                    borderRadius: '0.5rem',
+                    color: '#fff',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div style={{
+              backgroundColor: '#0a1a0a',
+              border: '1px solid #10b981',
+              borderRadius: '0.5rem',
+              padding: '1rem',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{
+                color: '#888',
+                fontSize: '0.85rem',
+                margin: 0,
+                lineHeight: '1.5'
+              }}>
+                💡 提示：配置保存在浏览器本地存储中，不会上传到服务器。自定义 API 密钥优先级高于默认服务。
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => {
+                  setApiConfig(loadApiConfig())
+                  setShowApiConfig(false)
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: '#333',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#444'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#333'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  saveApiConfig(apiConfig)
+                  setShowApiConfig(false)
+                  alert('配置已保存！')
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                }}
+              >
+                保存配置
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
