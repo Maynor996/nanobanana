@@ -5,6 +5,7 @@ import './nano.css'
 import BrowserWarning from '../components/BrowserWarning'
 import { useLanguage } from '../i18n/LanguageContext'
 import ShareModal from '../components/ShareModal'
+import FreeQuotaModal from '../components/FreeQuotaModal'
 import { loadApiConfig, saveApiConfig, type ApiConfig } from '../lib/api-config'
 
 type Mode = 'upload' | 'text'
@@ -28,6 +29,7 @@ export default function NanoPage() {
   const [errorModalTitle, setErrorModalTitle] = useState('')
   const [errorModalMessage, setErrorModalMessage] = useState('')
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showQuotaModal, setShowQuotaModal] = useState(false)
   const [showApiConfig, setShowApiConfig] = useState(false)
   const [apiConfig, setApiConfig] = useState<ApiConfig>(() => loadApiConfig())
 
@@ -54,6 +56,23 @@ export default function NanoPage() {
     { icon: '🔍', text: '详细分析', value: '在原图基础上添加详细的标注说明，分析图片内容和关键元素' }
   ]
 
+  // 页面加载时检查是否需要显示额度耗尽弹窗（首次访问）
+  useEffect(() => {
+    const hasSeenQuotaModal = localStorage.getItem('hasSeenQuotaModal')
+    if (!hasSeenQuotaModal) {
+      // 延迟1秒后显示，让页面先加载
+      const timer = setTimeout(() => {
+        setShowQuotaModal(true)
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  // 关闭额度弹窗并记录到 localStorage
+  const handleCloseQuotaModal = () => {
+    setShowQuotaModal(false)
+    localStorage.setItem('hasSeenQuotaModal', 'true')
+  }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -344,6 +363,18 @@ export default function NanoPage() {
       }
 
       if (!response.ok) {
+        // 检查是否是额度不足错误
+        if (response.status === 429 ||
+            (data.error && (
+              data.error.includes('额度') ||
+              data.error.includes('quota') ||
+              data.error.includes('limit') ||
+              data.error.includes('insufficient')
+            ))) {
+          setShowQuotaModal(true)
+          return
+        }
+
         if (response.status === 524) {
           const errorMsg = `服务器响应超时，请稍后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
           showError('服务器超时', errorMsg)
@@ -1653,55 +1684,6 @@ export default function NanoPage() {
         </div>
       )}
 
-      {/* 赞赏码部分 */}
-      <div style={{
-        marginTop: '4rem',
-        padding: '2rem',
-        backgroundColor: '#0a0a0a',
-        borderRadius: '1.5rem',
-        border: '1px solid #222',
-        textAlign: 'center'
-      }}>
-        <h2 style={{
-          fontSize: '1.8rem',
-          fontWeight: 'bold',
-          marginBottom: '1rem',
-          background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
-        }}>
-          💝 支持开发者
-        </h2>
-        <p style={{
-          color: '#888',
-          fontSize: '1rem',
-          marginBottom: '2rem',
-          lineHeight: '1.6'
-        }}>
-          如果您觉得这个工具有帮助，欢迎扫码支持开发者！<br />
-          您的支持是我继续开发的最大动力 😊
-        </p>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginBottom: '1rem'
-        }}>
-          <img
-            src="/appreciation-code.jpg"
-            alt="赞赏码"
-            style={{
-              maxWidth: '400px',
-              width: '100%',
-              height: 'auto',
-              borderRadius: '1rem',
-              boxShadow: '0 10px 30px rgba(251, 191, 36, 0.2)',
-              border: '2px solid rgba(251, 191, 36, 0.3)'
-            }}
-          />
-        </div>
-      </div>
-
       {/* 使用示例部分 */}
       <div style={{
         marginTop: '4rem',
@@ -2018,6 +2000,12 @@ export default function NanoPage() {
           t={t}
         />
       )}
+
+      {/* Free Quota Modal */}
+      <FreeQuotaModal
+        isOpen={showQuotaModal}
+        onClose={handleCloseQuotaModal}
+      />
 
       {/* API Config Modal */}
       {showApiConfig && (

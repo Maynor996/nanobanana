@@ -159,12 +159,6 @@ export const translations = {
       close: '关闭'
     },
 
-    // Support Section
-    support: {
-      title: '💝 支持开发者',
-      description: '如果您觉得这个工具有帮助，欢迎扫码支持开发者！\n您的支持是我继续开发的最大动力 😊'
-    },
-
     // Examples Section
     examples: {
       title: '🎨 使用示例',
@@ -364,12 +358,6 @@ export const translations = {
       uploadingTip: 'Images are being uploaded, please wait...',
       maxFiles: 'Maximum 10 images allowed',
       close: 'Close'
-    },
-
-    // Support Section
-    support: {
-      title: '💝 Support Developer',
-      description: 'If you find this tool helpful, feel free to support the developer!\nYour support is my greatest motivation to continue development 😊'
     },
 
     // Examples Section
