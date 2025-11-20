@@ -18,9 +18,10 @@ export const translations = {
     // Model Selector
     model: {
       label: 'AI模型:',
+      gemini3pro: '🚀 NanoBanana2 (Gemini 3 Pro)',
       gemini: '🤖 Gemini 2.5 Flash',
       doubao: '🚧 豆包模型(待开发)',
-      doubaoTip: '豆包模型功能正在开发中，敬请期待！目前请使用 Gemini 2.5 Flash 模型。',
+      doubaoTip: '豆包模型功能正在开发中，敬请期待！目前请使用 NanoBanana2 (Gemini 3 Pro) 模型。',
       size: '尺寸:'
     },
 
@@ -219,9 +220,10 @@ export const translations = {
     // Model Selector
     model: {
       label: 'AI Model:',
+      gemini3pro: '🚀 NanoBanana2 (Gemini 3 Pro)',
       gemini: '🤖 Gemini 2.5 Flash',
       doubao: '🚧 Doubao Model (Coming Soon)',
-      doubaoTip: 'Doubao model is under development, stay tuned! Please use Gemini 2.5 Flash model for now.',
+      doubaoTip: 'Doubao model is under development, stay tuned! Please use NanoBanana2 (Gemini 3 Pro) model for now.',
       size: 'Size:'
     },
 

@@ -10,7 +10,7 @@ import { loadApiConfig, saveApiConfig, type ApiConfig } from '../lib/api-config'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
-type Model = 'gemini' | 'doubao'
+type Model = 'gemini-3-pro-image-preview' | 'gemini' | 'doubao'
 
 export default function NanoPage() {
   const { language, setLanguage, t } = useLanguage()
@@ -20,7 +20,7 @@ export default function NanoPage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [style, setStyle] = useState<Style>('none')
-  const [model, setModel] = useState<Model>('gemini')
+  const [model, setModel] = useState<Model>('gemini-3-pro-image-preview')
   const [imageSize, setImageSize] = useState<string>('1k')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -305,6 +305,8 @@ export default function NanoPage() {
         apiEndpoint = '/api/doubao'
       } else if (model === 'gemini' && mode === 'text') {
         apiEndpoint = '/api/generate'
+      } else if (model === 'gemini-3-pro-image-preview') {
+        apiEndpoint = mode === 'text' ? '/api/generate' : '/api/gemini'
       }
 
       const requestBody = mode === 'text'
@@ -325,12 +327,16 @@ export default function NanoPage() {
       requestData.timestamp = Date.now()
 
       // 始终传递 API 配置（后端会自动 fallback 到环境变量）
-      if (model === 'gemini') {
+      if (model === 'gemini' || model === 'gemini-3-pro-image-preview') {
         if (apiConfig.geminiApiKey) {
           requestData.apiKey = apiConfig.geminiApiKey
         }
         if (apiConfig.geminiApiUrl) {
           requestData.apiUrl = apiConfig.geminiApiUrl
+        }
+        // 添加模型标识
+        if (model === 'gemini-3-pro-image-preview') {
+          requestData.model = 'gemini-3-pro-image-preview'
         }
       } else if (model === 'doubao') {
         if (apiConfig.doubaoApiKey) {
@@ -358,7 +364,7 @@ export default function NanoPage() {
         data = await response.json()
       } catch (parseError) {
         console.error('JSON解析错误:', parseError)
-        showError('API解析错误', `API响应解析失败，请稍后重试。使用的模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+        showError('API解析错误', `API响应解析失败，请稍后重试。使用的模型：${getModelDisplayName(model)}`)
         return
       }
 
@@ -376,15 +382,15 @@ export default function NanoPage() {
         }
 
         if (response.status === 524) {
-          const errorMsg = `服务器响应超时，请稍后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
+          const errorMsg = `服务器响应超时，请稍后重试。模型：${getModelDisplayName(model)}`
           showError('服务器超时', errorMsg)
           return
         } else if (response.status === 500) {
-          const errorMsg = `服务器内部错误：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
+          const errorMsg = `服务器内部错误：${data.error || '未知错误'}。模型：${getModelDisplayName(model)}`
           showError('服务器错误', errorMsg)
           return
         }
-        const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
+        const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${getModelDisplayName(model)}`
         showError('生成失败', errorMsg)
         return
       } else {
@@ -394,14 +400,14 @@ export default function NanoPage() {
       console.error('请求错误:', err)
       if (err instanceof Error) {
         if (err.message.includes('fetch')) {
-          showError('网络错误', `网络连接失败，请检查网络后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+          showError('网络错误', `网络连接失败，请检查网络后重试。模型：${getModelDisplayName(model)}`)
         } else if (err.message.includes('timeout')) {
-          showError('请求超时', `请求超时，请稍后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+          showError('请求超时', `请求超时，请稍后重试。模型：${getModelDisplayName(model)}`)
         } else {
-          showError('发生错误', `发生错误：${err.message}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+          showError('发生错误', `发生错误：${err.message}。模型：${getModelDisplayName(model)}`)
         }
       } else {
-        showError('未知错误', `未知错误，请重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+        showError('未知错误', `未知错误，请重试。模型：${getModelDisplayName(model)}`)
       }
     } finally {
       setLoading(false)
@@ -417,6 +423,19 @@ export default function NanoPage() {
       photo: '写实照片，真实感'
     }
     return styles[style]
+  }
+
+  const getModelDisplayName = (model: Model): string => {
+    switch (model) {
+      case 'gemini-3-pro-image-preview':
+        return language === 'zh' ? 'NanoBanana2 (Gemini 3 Pro)' : 'NanoBanana2 (Gemini 3 Pro)'
+      case 'gemini':
+        return language === 'zh' ? 'Gemini 2.5 Flash' : 'Gemini 2.5 Flash'
+      case 'doubao':
+        return language === 'zh' ? '豆包模型(待开发)' : 'Doubao Model (Coming Soon)'
+      default:
+        return model
+    }
   }
 
   // 下载图片
@@ -686,6 +705,26 @@ export default function NanoPage() {
       <div className="model-selector" style={{ display: 'flex', gap: '1rem', padding: '0 2rem 2rem', justifyContent: 'center' }}>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <span style={{ color: '#888', fontSize: '0.9rem' }}>{t.model.label}</span>
+          <button
+            onClick={() => setModel('gemini-3-pro-image-preview')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: model === 'gemini-3-pro-image-preview'
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : 'transparent',
+              border: model === 'gemini-3-pro-image-preview' ? 'none' : '1px solid #10b981',
+              color: model === 'gemini-3-pro-image-preview' ? 'white' : '#10b981',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              transition: 'all 0.3s ease',
+              boxShadow: model === 'gemini-3-pro-image-preview'
+                ? '0 4px 15px rgba(16, 185, 129, 0.3)'
+                : 'none'
+            }}
+          >
+            {t.model.gemini3pro}
+          </button>
           <button
             onClick={() => setModel('gemini')}
             style={{

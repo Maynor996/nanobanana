@@ -5,7 +5,7 @@ export const maxDuration = 60
 
 async function geminiHandler(request: NextRequest) {
   try {
-    const { prompt, imageData, imageDataArray, apiKey: customApiKey, apiUrl: customApiUrl } = await request.json()
+    const { prompt, imageData, imageDataArray, apiKey: customApiKey, apiUrl: customApiUrl, model: customModel } = await request.json()
 
     if (!prompt) {
       return NextResponse.json({ error: '请提供描述' }, { status: 400 })
@@ -14,7 +14,16 @@ async function geminiHandler(request: NextRequest) {
     // 优先使用前端传来的自定义配置，否则使用环境变量
     const apiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.MAYNOR_API_KEY
     const apiUrl = customApiUrl || process.env.MAYNOR_API_URL || 'https://apipro.maynor1024.live'
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-image'
+
+    // 模型映射：将前端模型名映射到实际的API模型名
+    const modelMap: { [key: string]: string } = {
+      'gemini-3-pro-image-preview': 'gemini-3-pro-image-preview',
+      'gemini': 'gemini-2.5-flash-image',
+      'gemini-2.5-flash-image': 'gemini-2.5-flash-image'
+    }
+
+    // 优先使用前端传递的模型，否则使用环境变量，最后使用默认值
+    const model = customModel ? modelMap[customModel] || customModel : (process.env.GEMINI_MODEL || 'gemini-2.5-flash-image')
 
     if (!apiKey) {
       return NextResponse.json({ error: 'API配置缺失，请在页面右上角配置 API 密钥' }, { status: 500 })

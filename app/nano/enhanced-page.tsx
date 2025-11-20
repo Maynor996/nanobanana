@@ -7,7 +7,7 @@ import UserAuth from '../components/UserAuth'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
-type Model = 'gemini' | 'doubao'
+type Model = 'gemini-3-pro-image-preview' | 'gemini' | 'doubao'
 
 export default function EnhancedNanoPage() {
   const [mode, setMode] = useState<Mode>('text')
@@ -17,7 +17,7 @@ export default function EnhancedNanoPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [style, setStyle] = useState<Style>('none')
   const [imageCount, setImageCount] = useState(1)
-  const [model, setModel] = useState<Model>('gemini')
+  const [model, setModel] = useState<Model>('gemini-3-pro-image-preview')
   const [imageSize, setImageSize] = useState<string>('1k')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
