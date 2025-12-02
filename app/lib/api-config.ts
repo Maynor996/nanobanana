@@ -7,10 +7,6 @@ export interface ApiConfig {
   // Gemini API 配置
   geminiApiKey: string;
   geminiApiUrl: string;
-
-  // Doubao API 配置
-  doubaoApiKey: string;
-  doubaoApiUrl: string;
 }
 
 const STORAGE_KEY = 'nanobanana_api_config';
@@ -22,8 +18,6 @@ export function getDefaultApiConfig(): ApiConfig {
   return {
     geminiApiKey: '',
     geminiApiUrl: 'https://apipro.maynor1024.live',
-    doubaoApiKey: '',
-    doubaoApiUrl: 'https://apipro.maynor1024.live',
   };
 }
 

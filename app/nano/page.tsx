@@ -10,7 +10,7 @@ import { loadApiConfig, saveApiConfig, type ApiConfig } from '../lib/api-config'
 
 type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
-type Model = 'gemini-3-pro-image-preview' | 'gemini' | 'doubao'
+type Model = 'gemini-3-pro-image-preview' | 'gemini' | 'zimage'
 
 export default function NanoPage() {
   const { language, setLanguage, t } = useLanguage()
@@ -20,7 +20,7 @@ export default function NanoPage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [style, setStyle] = useState<Style>('none')
-  const [model, setModel] = useState<Model>('gemini-3-pro-image-preview')
+  const [model, setModel] = useState<Model>('zimage')
   const [imageSize, setImageSize] = useState<string>('1k')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -301,8 +301,8 @@ export default function NanoPage() {
 
       // 根据选择的模型决定API端点
       let apiEndpoint = '/api/gemini'
-      if (model === 'doubao') {
-        apiEndpoint = '/api/doubao'
+      if (model === 'zimage') {
+        apiEndpoint = '/api/zimage'
       } else if (model === 'gemini' && mode === 'text') {
         apiEndpoint = '/api/generate'
       } else if (model === 'gemini-3-pro-image-preview') {
@@ -318,9 +318,14 @@ export default function NanoPage() {
         ...requestBody
       }
 
-      // 如果是豆包模型，添加尺寸参数
-      if (model === 'doubao') {
+      // 根据不同模型添加特定参数
+      if (model === 'zimage') {
+        // z-image 特定参数
         requestData.size = imageSize
+        requestData.steps = 8
+        requestData.guidance_scale = 7
+        requestData.batch_size = 1
+        requestData.negative_prompt = '模糊,水印,低质量,变形'
       }
 
       // 使用时间戳作为用户标识
@@ -338,15 +343,7 @@ export default function NanoPage() {
         if (model === 'gemini-3-pro-image-preview') {
           requestData.model = 'gemini-3-pro-image-preview'
         }
-      } else if (model === 'doubao') {
-        if (apiConfig.doubaoApiKey) {
-          requestData.apiKey = apiConfig.doubaoApiKey
-        }
-        if (apiConfig.doubaoApiUrl) {
-          requestData.apiUrl = apiConfig.doubaoApiUrl
-        }
-      }
-
+      
       console.log('发送请求到:', apiEndpoint, '配置:', {
         hasApiKey: !!requestData.apiKey,
         apiUrl: requestData.apiUrl,
@@ -394,7 +391,21 @@ export default function NanoPage() {
         showError('生成失败', errorMsg)
         return
       } else {
-        setResult(data)
+        // 处理 z-image 的异步响应
+        if (model === 'zimage' && data.taskUuid) {
+          // 设置初始结果，显示任务已提交
+          setResult({
+            taskUuid: data.taskUuid,
+            status: 'pending',
+            message: '任务已提交，正在生成中...',
+            model: 'zimage-turbo'
+          })
+
+          // 开始轮询获取结果
+          pollZImageResult(data.taskUuid)
+        } else {
+          setResult(data)
+        }
       }
     } catch (err) {
       console.error('请求错误:', err)
@@ -414,6 +425,121 @@ export default function NanoPage() {
     }
   }
 
+  // 轮询 z-image 结果
+  const pollZImageResult = async (taskUuid: string) => {
+    const pollInterval = 5000 // 5秒轮询一次
+    const maxPolls = 60 // 最多轮询60次（5分��）
+    let pollCount = 0
+
+    const poll = async () => {
+      try {
+        pollCount++
+        console.log(`轮询 Z-Image 结果 ${pollCount}/${maxPolls}`)
+
+        const response = await fetch(`/api/zimage/poll?taskUuid=${taskUuid}`)
+
+        if (!response.ok) {
+          console.error('轮询失败:', response.status)
+          if (pollCount < maxPolls) {
+            setTimeout(poll, pollInterval)
+          } else {
+            setResult({
+              ...result,
+              status: 'error',
+              error: '轮询超时，请重试'
+            })
+          }
+          return
+        }
+
+        const data = await response.json()
+
+        if (data.status === 'completed' && data.images) {
+          // 转换结果格式
+          const imageData = data.images[0] // 取第一张图
+
+          // 下载图片并转换为 base64
+          try {
+            const imageResponse = await fetch(imageData)
+            if (imageResponse.ok) {
+              const imageBuffer = await imageResponse.arrayBuffer()
+              const base64Image = Buffer.from(imageBuffer).toString('base64')
+
+              setResult({
+                imageData: base64Image,
+                mimeType: 'image/png',
+                taskUuid: taskUuid,
+                model: 'zimage-turbo',
+                status: 'completed'
+              })
+            } else {
+              throw new Error('图片下载失败')
+            }
+          } catch (downloadError) {
+            console.error('下载图片失败:', downloadError)
+            // 返回图片URL
+            setResult({
+              imageUrl: imageData,
+              taskUuid: taskUuid,
+              model: 'zimage-turbo',
+              status: 'completed'
+            })
+          }
+        } else if (data.status === 'failed') {
+          setResult({
+            ...result,
+            status: 'error',
+            error: data.error || '生成失败'
+          })
+        } else if (data.status === 'processing') {
+          // 更新进度
+          setResult({
+            ...result,
+            status: 'processing',
+            message: `正在生成中... (${pollCount * 5}秒)`,
+            progress: data.progress || Math.min((pollCount / maxPolls) * 100, 95)
+          })
+
+          // 继续轮询
+          if (pollCount < maxPolls) {
+            setTimeout(poll, pollInterval)
+          } else {
+            setResult({
+              ...result,
+              status: 'error',
+              error: '生成超时，请重试'
+            })
+          }
+        } else {
+          // 继续轮询
+          if (pollCount < maxPolls) {
+            setTimeout(poll, pollInterval)
+          } else {
+            setResult({
+              ...result,
+              status: 'error',
+              error: '生成超时，请重试'
+            })
+          }
+        }
+      } catch (error) {
+        console.error('轮询错误:', error)
+        if (pollCount < maxPolls) {
+          setTimeout(poll, pollInterval)
+        } else {
+          setResult({
+            ...result,
+            status: 'error',
+            error: '轮询出错，请重试'
+          })
+        }
+      }
+    }
+
+    // 开始轮询
+    setTimeout(poll, pollInterval)
+  }
+
   const getStylePrompt = (style: Style): string => {
     const styles = {
       none: '',
@@ -431,9 +557,9 @@ export default function NanoPage() {
         return language === 'zh' ? 'NanoBanana2 (Gemini 3 Pro)' : 'NanoBanana2 (Gemini 3 Pro)'
       case 'gemini':
         return language === 'zh' ? 'Gemini 2.5 Flash' : 'Gemini 2.5 Flash'
-      case 'doubao':
-        return language === 'zh' ? '豆包模型(待开发)' : 'Doubao Model (Coming Soon)'
-      default:
+      case 'zimage':
+        return language === 'zh' ? 'Z-Image (免费模型)' : 'Z-Image (Free Model)'
+            default:
         return model
     }
   }
@@ -706,6 +832,26 @@ export default function NanoPage() {
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <span style={{ color: '#888', fontSize: '0.9rem' }}>{t.model.label}</span>
           <button
+            onClick={() => setModel('zimage')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: model === 'zimage'
+                ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                : 'transparent',
+              border: model === 'zimage' ? 'none' : '1px solid #f59e0b',
+              color: model === 'zimage' ? 'white' : '#f59e0b',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              transition: 'all 0.3s ease',
+              boxShadow: model === 'zimage'
+                ? '0 4px 15px rgba(245, 158, 11, 0.3)'
+                : 'none'
+            }}
+          >
+            Z-Image <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>(免费)</span>
+          </button>
+          <button
             onClick={() => setModel('gemini-3-pro-image-preview')}
             style={{
               padding: '0.5rem 1rem',
@@ -745,56 +891,7 @@ export default function NanoPage() {
           >
             {t.model.gemini}
           </button>
-          <button
-            onClick={() => {
-              showError(t.model.doubao.replace('🚧 ', ''), t.model.doubaoTip)
-            }}
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#666',
-              border: '1px solid #555',
-              color: '#ccc',
-              borderRadius: '0.5rem',
-              cursor: 'not-allowed',
-              fontSize: '0.9rem',
-              transition: 'all 0.3s ease',
-              opacity: 0.6
-            }}
-            disabled
-          >
-            {t.model.doubao}
-          </button>
         </div>
-        
-        {/* Size Selector for Doubao */}
-        {model === 'doubao' && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ color: '#888', fontSize: '0.9rem' }}>{t.model.size}</span>
-            {['1k', '2k', '4k'].map((size) => (
-              <button
-                key={size}
-                onClick={() => setImageSize(size)}
-                style={{
-                  padding: '0.4rem 0.8rem',
-                  background: imageSize === size
-                    ? 'linear-gradient(135deg, #f59e0b, #d97706)'
-                    : 'transparent',
-                  border: imageSize === size ? 'none' : '1px solid #f59e0b',
-                  color: imageSize === size ? 'white' : '#f59e0b',
-                  borderRadius: '0.4rem',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem',
-                  transition: 'all 0.3s ease',
-                  boxShadow: imageSize === size
-                    ? '0 2px 8px rgba(245, 158, 11, 0.3)'
-                    : 'none'
-                }}
-              >
-                {size.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
@@ -1390,18 +1487,26 @@ export default function NanoPage() {
             <div style={{ marginBottom: '1.5rem' }}>
               {/* 免费服务提示 */}
               <div style={{
-                backgroundColor: '#0f2419',
-                border: '1px solid #10b981',
+                backgroundColor: model === 'zimage' ? '#422006' : '#0f2419',
+                border: model === 'zimage' ? '1px solid #f59e0b' : '1px solid #10b981',
                 borderRadius: '0.5rem',
                 padding: '0.75rem',
                 marginBottom: '1rem',
                 textAlign: 'center'
               }}>
-                <div style={{ color: '#10b981', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                  {t.freeService.title}
+                <div style={{
+                  color: model === 'zimage' ? '#f59e0b' : '#10b981',
+                  fontSize: '0.9rem',
+                  fontWeight: 'bold',
+                  marginBottom: '0.25rem'
+                }}>
+                  {model === 'zimage' ? '🎉 Z-Image 免费模型' : t.freeService.title}
                 </div>
                 <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '0' }}>
-                  {t.freeService.description}
+                  {model === 'zimage'
+                    ? '无需 API Key，完全免费，无限使用！'
+                    : t.freeService.description
+                  }
                 </p>
               </div>
 
@@ -1545,8 +1650,57 @@ export default function NanoPage() {
           </h3>
           </div>
 
-          {/* 图片显示 */}
-          {result.imageData || result.imageUrl ? (
+          {/* Z-Image 进度显示 */}
+          {result.status === 'pending' || result.status === 'processing' ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '3rem',
+              background: 'linear-gradient(135deg, #111111, #1a1a1a)',
+              borderRadius: '1.5rem',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+              maxWidth: '500px',
+              margin: '0 auto'
+            }}>
+              <div style={{
+                fontSize: '3rem',
+                marginBottom: '1rem',
+                animation: 'rotate 2s linear infinite'
+              }}>
+                ⚙️
+              </div>
+              <h3 style={{
+                fontSize: '1.5rem',
+                marginBottom: '1rem',
+                color: '#10b981'
+              }}>
+                {result.message || '正在生成图片...'}
+              </h3>
+              {result.progress && (
+                <div style={{
+                  width: '100%',
+                  height: '8px',
+                  backgroundColor: '#333',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  marginTop: '1rem'
+                }}>
+                  <div style={{
+                    width: `${result.progress}%`,
+                    height: '100%',
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
+              )}
+              <p style={{
+                color: '#888',
+                fontSize: '0.9rem',
+                marginTop: '1rem'
+              }}>
+                Z-Image 正在处理您的请求，请稍候...
+              </p>
+            </div>
+          ) : result.imageData || result.imageUrl ? (
             <div style={{ textAlign: 'center' }}>
               <img
                 id="generated-image"
@@ -2168,69 +2322,6 @@ export default function NanoPage() {
                   type="text"
                   value={apiConfig.geminiApiUrl}
                   onChange={(e) => setApiConfig({ ...apiConfig, geminiApiUrl: e.target.value })}
-                  placeholder="https://apipro.maynor1024.live"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: '#0a0a0a',
-                    border: '1px solid #333',
-                    borderRadius: '0.5rem',
-                    color: '#fff',
-                    fontSize: '0.95rem'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Doubao API Config */}
-            <div style={{ marginBottom: '2rem' }}>
-              <h3 style={{
-                color: '#10b981',
-                fontSize: '1.1rem',
-                marginBottom: '1rem'
-              }}>
-                Doubao API
-              </h3>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#ccc',
-                  marginBottom: '0.5rem',
-                  fontSize: '0.9rem'
-                }}>
-                  API Key
-                </label>
-                <input
-                  type="password"
-                  value={apiConfig.doubaoApiKey}
-                  onChange={(e) => setApiConfig({ ...apiConfig, doubaoApiKey: e.target.value })}
-                  placeholder="从 apipro.maynor1024.live 获取"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: '#0a0a0a',
-                    border: '1px solid #333',
-                    borderRadius: '0.5rem',
-                    color: '#fff',
-                    fontSize: '0.95rem'
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#ccc',
-                  marginBottom: '0.5rem',
-                  fontSize: '0.9rem'
-                }}>
-                  API URL
-                </label>
-                <input
-                  type="text"
-                  value={apiConfig.doubaoApiUrl}
-                  onChange={(e) => setApiConfig({ ...apiConfig, doubaoApiUrl: e.target.value })}
                   placeholder="https://apipro.maynor1024.live"
                   style={{
                     width: '100%',

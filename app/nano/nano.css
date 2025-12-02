@@ -5,6 +5,16 @@
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
+/* Rotation animation for loading spinner */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Mobile-first responsive design */
 @media (max-width: 768px) {
   /* Header adjustments */
