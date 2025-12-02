@@ -9,6 +9,20 @@ type Mode = 'upload' | 'text'
 type Style = 'none' | 'enhance' | 'artistic' | 'anime' | 'photo'
 type Model = 'gemini-3-pro-image-preview' | 'gemini' | 'zimage'
 
+// 获取模型显示名称
+const getModelDisplayName = (model: Model): string => {
+  switch (model) {
+    case 'zimage':
+      return 'Z-Image (免费)'
+    case 'gemini-3-pro-image-preview':
+      return 'NanoBanana2 (Gemini 3 Pro)'
+    case 'gemini':
+      return 'Gemini 2.5 Flash'
+    default:
+      return model
+  }
+}
+
 export default function EnhancedNanoPage() {
   const [mode, setMode] = useState<Mode>('text')
   const [prompt, setPrompt] = useState('')
@@ -128,7 +142,10 @@ export default function EnhancedNanoPage() {
         requestData.mode = 'upload'
       }
 
-      const endpoint = model === 'doubao' ? '/api/doubao' : '/api/gemini'
+      let endpoint = '/api/gemini'
+      if (model === 'zimage') {
+        endpoint = '/api/zimage'
+      }
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -147,7 +164,7 @@ export default function EnhancedNanoPage() {
           showError('积分不足', '您的积分已用完，请购买积分继续使用')
           return
         }
-        const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`
+        const errorMsg = `生成失败：${data.error || '未知错误'}。模型：${getModelDisplayName(model)}`
         showError('生成失败', errorMsg)
         return
       } else {
@@ -160,14 +177,14 @@ export default function EnhancedNanoPage() {
       console.error('请求错误:', err)
       if (err instanceof Error) {
         if (err.message.includes('fetch')) {
-          showError('网络错误', `网络连接失败，请检查网络后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+          showError('网络错误', `网络连接失败，请检查网络后重试。模型：${getModelDisplayName(model)}`)
         } else if (err.message.includes('timeout')) {
-          showError('请求超时', `请求超时，请稍后重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+          showError('请求超时', `请求超时，请稍后重试。模型：${getModelDisplayName(model)}`)
         } else {
-          showError('发生错误', `发生错误：${err.message}。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+          showError('发生错误', `发生错误：${err.message}。模型：${getModelDisplayName(model)}`)
         }
       } else {
-        showError('未知错误', `未知错误，请重试。模型：${model === 'doubao' ? '豆包模型(待开发)' : 'Gemini 2.5 Flash'}`)
+        showError('未知错误', `未知错误，请重试。模型：${getModelDisplayName(model)}`)
       }
     } finally {
       setLoading(false)
