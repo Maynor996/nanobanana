@@ -343,7 +343,8 @@ export default function NanoPage() {
         if (model === 'gemini-3-pro-image-preview') {
           requestData.model = 'gemini-3-pro-image-preview'
         }
-      
+      }
+
       console.log('发送请求到:', apiEndpoint, '配置:', {
         hasApiKey: !!requestData.apiKey,
         apiUrl: requestData.apiUrl,
