@@ -64,24 +64,24 @@ export default function FreeQuotaModal({ isOpen, onClose }: FreeQuotaModalProps)
 
         {/* 图标 */}
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⚠️</div>
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
           <h3
             style={{
               fontSize: '1.75rem',
-              color: '#ef4444',
+              color: '#10b981',
               margin: '0 0 0.75rem 0',
               fontWeight: 'bold'
             }}
           >
-            免费额度已耗尽
+            欢迎使用 Nano Banana！
           </h3>
         </div>
 
         {/* 提示内容 */}
         <div
           style={{
-            backgroundColor: '#0f1419',
-            border: '1px solid #333',
+            backgroundColor: '#0f2419',
+            border: '1px solid #10b981',
             borderRadius: '0.75rem',
             padding: '1.5rem',
             marginBottom: '1.5rem'
@@ -96,18 +96,16 @@ export default function FreeQuotaModal({ isOpen, onClose }: FreeQuotaModalProps)
               textAlign: 'center'
             }}
           >
-            您的免费使用额度已用完
+            🍌 Z-Image 模型完全免费，无限使用！
             <br />
-            如需继续使用，请前往获取 API 令牌
+            Gemini 模型需要配置 API Key 才能使用
           </p>
         </div>
 
         {/* 操作按钮 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <a
-            href="https://apipro.maynor1024.live/"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={onClose}
             style={{
               padding: '1rem 2rem',
               background: 'linear-gradient(135deg, #10b981, #059669)',
@@ -118,7 +116,6 @@ export default function FreeQuotaModal({ isOpen, onClose }: FreeQuotaModalProps)
               fontSize: '1.125rem',
               fontWeight: 'bold',
               textAlign: 'center',
-              textDecoration: 'none',
               transition: 'all 0.3s ease',
               boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
               display: 'flex',
@@ -135,34 +132,41 @@ export default function FreeQuotaModal({ isOpen, onClose }: FreeQuotaModalProps)
               e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)'
             }}
           >
-            <span>🔑</span>
-            <span>获取 API 令牌</span>
-          </a>
+            <span>🚀</span>
+            <span>开始免费创作</span>
+          </button>
 
-          <button
-            onClick={onClose}
+          <a
+            href="/tutorials/beginner-guide"
             style={{
-              padding: '1rem 2rem',
+              padding: '0.75rem 1.5rem',
               background: 'transparent',
-              color: '#888',
-              border: '1px solid #444',
+              color: '#10b981',
+              border: '1px solid #10b981',
               borderRadius: '0.75rem',
               cursor: 'pointer',
               fontSize: '1rem',
               fontWeight: '600',
-              transition: 'all 0.3s ease'
+              textAlign: 'center',
+              textDecoration: 'none',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#666'
-              e.currentTarget.style.color = '#fff'
+              e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)'
+              e.currentTarget.style.transform = 'translateY(-2px)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#444'
-              e.currentTarget.style.color = '#888'
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.transform = 'none'
             }}
           >
-            稍后再说
-          </button>
+            <span>📖</span>
+            <span>查看新手教程</span>
+          </a>
         </div>
 
         {/* 帮助信息 */}

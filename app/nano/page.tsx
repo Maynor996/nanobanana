@@ -6,6 +6,8 @@ import BrowserWarning from '../components/BrowserWarning'
 import { useLanguage } from '../i18n/LanguageContext'
 import ShareModal from '../components/ShareModal'
 import FreeQuotaModal from '../components/FreeQuotaModal'
+import OnboardingGuide from '../components/OnboardingGuide'
+import { Tooltip, HintBubble } from '../components/Tooltips'
 import { loadApiConfig, saveApiConfig, type ApiConfig } from '../lib/api-config'
 
 type Mode = 'upload' | 'text'
@@ -32,6 +34,8 @@ export default function NanoPage() {
   const [showQuotaModal, setShowQuotaModal] = useState(false)
   const [showApiConfig, setShowApiConfig] = useState(false)
   const [apiConfig, setApiConfig] = useState<ApiConfig>(() => loadApiConfig())
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showHint, setShowHint] = useState(false)
 
   const quickPrompts = [
     { icon: '🏔️', text: '风景', value: '美丽的自然风景' },
@@ -56,14 +60,28 @@ export default function NanoPage() {
     { icon: '🔍', text: '详细分析', value: '在原图基础上添加详细的标注说明，分析图片内容和关键元素' }
   ]
 
-  // 页面加载时检查是否需要显示额度耗尽弹窗（首次访问）
+  // 页面加载时检查是否需要显示引导弹窗（首次访问）
   useEffect(() => {
     const hasSeenQuotaModal = localStorage.getItem('hasSeenQuotaModal')
+    const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding')
+
+    // 首次访问显示欢迎弹窗
     if (!hasSeenQuotaModal) {
-      // 延迟1秒后显示，让页面先加载
       const timer = setTimeout(() => {
         setShowQuotaModal(true)
       }, 1000)
+      return () => clearTimeout(timer)
+    }
+
+    // 如果没有完成过新手引导，延迟显示引导
+    if (!hasCompletedOnboarding && hasSeenQuotaModal) {
+      const timer = setTimeout(() => {
+        setShowOnboarding(true)
+        // 同时显示操作提示
+        setTimeout(() => {
+          setShowHint(true)
+        }, 5000)
+      }, 2000)
       return () => clearTimeout(timer)
     }
   }, [])
