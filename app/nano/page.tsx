@@ -446,8 +446,8 @@ export default function NanoPage() {
 
   // 轮询 z-image 结果
   const pollZImageResult = async (taskUuid: string) => {
-    const pollInterval = 5000 // 5秒轮询一次
-    const maxPolls = 60 // 最多轮询60次（5分��）
+    const pollInterval = 8000 // 增加到8秒轮询一次，减少服务器压力
+    const maxPolls = 90 // 最多轮询90次（12分钟）
     let pollCount = 0
 
     const poll = async () => {
@@ -455,10 +455,26 @@ export default function NanoPage() {
         pollCount++
         console.log(`轮询 Z-Image 结果 ${pollCount}/${maxPolls}`)
 
-        const response = await fetch(`/api/zimage/poll?taskUuid=${taskUuid}`)
+        // 添加超时控制
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 70000) // 70秒超时
+
+        const response = await fetch(`/api/zimage/poll?taskUuid=${taskUuid}`, {
+          signal: controller.signal
+        })
+
+        clearTimeout(timeoutId)
 
         if (!response.ok) {
-          console.error('轮询失败:', response.status)
+          console.error('轮询失败:', response.status, response.statusText)
+
+          // 对于 504 错误，继续轮询
+          if (response.status === 504 && pollCount < maxPolls) {
+            console.log('服务器忙，继续轮询...')
+            setTimeout(poll, pollInterval)
+            return
+          }
+
           if (pollCount < maxPolls) {
             setTimeout(poll, pollInterval)
           } else {
