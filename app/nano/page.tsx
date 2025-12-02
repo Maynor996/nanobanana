@@ -677,6 +677,40 @@ export default function NanoPage() {
             {t.header.title}
           </h1>
 
+          {/* Help Button */}
+          <Tooltip text="查看新手教程" position="bottom">
+            <button
+              onClick={() => setShowOnboarding(true)}
+              style={{
+                padding: '0.5rem',
+                backgroundColor: 'transparent',
+                color: '#888',
+                border: '1px solid #333',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#10b981'
+                e.currentTarget.style.color = '#10b981'
+                e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#333'
+                e.currentTarget.style.color = '#888'
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              ?
+            </button>
+          </Tooltip>
+
           {/* Language Switcher */}
           <div style={{
             display: 'flex',
@@ -2227,6 +2261,19 @@ export default function NanoPage() {
       <FreeQuotaModal
         isOpen={showQuotaModal}
         onClose={handleCloseQuotaModal}
+      />
+
+      {/* Onboarding Guide */}
+      <OnboardingGuide
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+      />
+
+      {/* Hint Bubble */}
+      <HintBubble
+        visible={showHint}
+        text="试试点击左侧的灵感标签，快速开始创作！"
+        onClose={() => setShowHint(false)}
       />
 
       {/* API Config Modal */}
