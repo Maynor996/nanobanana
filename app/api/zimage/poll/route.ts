@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300 // 增加到 5 分钟，与主 API 一致
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,20 +18,70 @@ export async function GET(request: NextRequest) {
     const baseUrl = process.env.ZIMAGE_API_URL || 'https://zimage.nanobanana-free.top'
     const pollUrl = `${baseUrl}/v1/images/${taskUuid}`
 
-    const response = await fetch(pollUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
+    // 添加重试机制处理 504 错误
+    let response: Response | null = null
+    let lastError: any = null
+    const maxRetries = 3
 
-    if (!response.ok) {
-      console.error('Z-Image 轮询失败:', response.status, response.statusText)
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Z-Image 轮询尝试 ${attempt}/${maxRetries}`)
+
+        response = await fetch(pollUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          signal: AbortSignal.timeout(60000) // 60秒超时
+        })
+
+        if (response.ok || !response.status.toString().startsWith('5')) {
+          // 成功或者不是服务器错误，跳出重试循环
+          break
+        }
+
+        lastError = { status: response.status, statusText: response.statusText }
+        console.log(`Z-Image 轮询尝试 ${attempt} 失败:`, lastError)
+
+        // 如果不是最后一次尝试，等待一段时间再重试
+        if (attempt < maxRetries) {
+          const waitTime = attempt * 2000 // 递增等待时间：2s, 4s, 6s
+          console.log(`等待 ${waitTime/1000} 秒后重试...`)
+          await new Promise(resolve => setTimeout(resolve, waitTime))
+        }
+      } catch (error) {
+        lastError = error
+        console.log(`Z-Image 轮询尝试 ${attempt} 异常:`, error)
+
+        // 如果不是最后一次尝试，等待一段时间再重试
+        if (attempt < maxRetries) {
+          const waitTime = attempt * 2000
+          console.log(`等待 ${waitTime/1000} 秒后重试...`)
+          await new Promise(resolve => setTimeout(resolve, waitTime))
+        }
+      }
+    }
+
+    // ��查最终响应
+    if (!response || !response.ok) {
+      const errorStatus = response?.status || 500
+      const errorText = response?.statusText || lastError?.message || '轮询失败'
+      console.error('Z-Image 轮询最终失败:', errorStatus, errorText)
+
+      // 对于 504 错误，返回特殊状态码让前端继续轮询
+      if (errorStatus === 504) {
+        return NextResponse.json({
+          status: 'processing',
+          message: '服务器处理中，请继续轮询',
+          progress: 50
+        })
+      }
+
       return NextResponse.json({
         error: '轮询失败',
-        status: response.status,
-        statusText: response.statusText
-      }, { status: response.status })
+        status: errorStatus,
+        statusText: errorText
+      }, { status: errorStatus })
     }
 
     const data = await response.json()
