@@ -462,8 +462,18 @@ export default function NanoPage() {
           try {
             const imageResponse = await fetch(imageData)
             if (imageResponse.ok) {
-              const imageBuffer = await imageResponse.arrayBuffer()
-              const base64Image = Buffer.from(imageBuffer).toString('base64')
+              const imageBlob = await imageResponse.blob()
+              const base64Image = await new Promise((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const result = reader.result as string
+                  // 移除 data:image/png;base64, 前缀
+                  const base64 = result.split(',')[1]
+                  resolve(base64)
+                }
+                reader.onerror = reject
+                reader.readAsDataURL(imageBlob)
+              })
 
               setResult({
                 imageData: base64Image,
