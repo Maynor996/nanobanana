@@ -1,4 +1,4 @@
-https://zimage.nanobanana-free.top/
+https://zimage2.nanobanana-free.top/
 
 # Z-Image 图片生成代理服务器
 

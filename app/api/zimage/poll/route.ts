@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     console.log('轮询 Z-Image 任务状态:', taskUuid)
 
     // 轮询 z-image 结果 - 使用环境变量配置
-    const baseUrl = process.env.ZIMAGE_API_URL || 'https://zimage.nanobanana-free.top'
+    const baseUrl = process.env.ZIMAGE_API_URL || 'https://zimage2.nanobanana-free.top'
     const pollUrl = `${baseUrl}/v1/images/${taskUuid}`
 
     // 添加重试机制处理 504 错误
