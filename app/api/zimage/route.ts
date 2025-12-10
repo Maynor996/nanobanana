@@ -14,7 +14,7 @@ async function zimageHandler(request: NextRequest) {
     // z-image API 端点 - 使用环境变量配置
     const apiUrl = process.env.ZIMAGE_API_URL
       ? `${process.env.ZIMAGE_API_URL}/v1/chat/completions`
-      : 'https://zimage2.nanobanana-free.top/v1/chat/completions'
+      : 'http://154.12.24.179:8000/v1/chat/completions'
 
     console.log('Z-Image API 请求:', {
       prompt,
@@ -132,7 +132,7 @@ async function zimageHandler(request: NextRequest) {
         // 返回任务 UUID，前端需要轮询获取结果
         return NextResponse.json({
           taskUuid: taskUuid,
-          pollUrl: `https://zimage2.nanobanana-free.top/api/v1/images/${taskUuid}`,
+          pollUrl: `http://154.12.24.179:8000/api/v1/images/${taskUuid}`,
           model: 'zimage-turbo',
           usage: data.usage
         })

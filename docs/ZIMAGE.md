@@ -1,4 +1,4 @@
-https://zimage2.nanobanana-free.top/
+http://154.12.24.179:8000/
 
 # Z-Image 图片生成代理服务器
 
