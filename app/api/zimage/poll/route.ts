@@ -77,6 +77,23 @@ export async function GET(request: NextRequest) {
         })
       }
 
+      // 检查是否是任务 ID 格式错误
+      if (response && response.status === 400) {
+        try {
+          const errorData = await response.clone().json()
+          if (errorData.message && errorData.message.includes('Invalid task ID format')) {
+            return NextResponse.json({
+              status: 'failed',
+              error: '服务器返回的任务ID格式无效，请联系管理员',
+              code: 'INVALID_TASK_ID_FORMAT',
+              taskUuid: taskUuid
+            })
+          }
+        } catch (e) {
+          // 忽略解析错误
+        }
+      }
+
       return NextResponse.json({
         error: '轮询失败',
         status: errorStatus,

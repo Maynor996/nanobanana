@@ -75,8 +75,12 @@ async function zimageHandler(request: NextRequest) {
           signal: AbortSignal.timeout(300000) // 5分钟超时
         })
 
-        if (response.ok) {
-          break // 成功，跳出重试循环
+        if (response.ok || response.status === 502) {
+          // 对于 502 错误，我们也继续尝试轮询
+          if (response.status === 502) {
+            console.log('收到 502 错误，但尝试解析响应...')
+          }
+          break // 成功或收到可处理的错误，跳出重试循环
         }
 
         lastError = { status: response.status, statusText: response.statusText }
@@ -102,7 +106,7 @@ async function zimageHandler(request: NextRequest) {
     }
 
     // 检查最终响应
-    if (!response || !response.ok) {
+    if (!response || (!response.ok && response.status !== 502)) {
       let errorData: any = {}
       try {
         if (response) {
@@ -121,22 +125,48 @@ async function zimageHandler(request: NextRequest) {
       }, { status: response?.status || 500 })
     }
 
-    const data = await response.json()
+    // 对于 502 错误，尝试解析响应
+    let data: any
+    if (response && response.status === 502) {
+      console.log('尝试解析 502 错误响应...')
+      try {
+        const text = await response.text()
+        console.log('502 响应内容:', text)
+        // 尝试从 502 响应中提取任务 ID（可能服务器在错误中返回了 ID）
+        const taskIdMatch = text.match(/task[_\s]?ID[:\s]+([A-Za-z0-9]+)/i)
+        if (taskIdMatch && taskIdMatch[1]) {
+          data = { task_id: taskIdMatch[1] }
+          console.log('从 502 错误中提取到任务 ID:', taskIdMatch[1])
+        } else {
+          return NextResponse.json({
+            error: '服务器返回 502 Bad Gateway 错误',
+            suggestion: '服务器可能正在重启或过载，请稍后重试'
+          }, { status: 502 })
+        }
+      } catch (e) {
+        return NextResponse.json({
+          error: '服务器返回 502 Bad Gateway 错误',
+          suggestion: '服务器可能正在重启或过载，请稍后重试'
+        }, { status: 502 })
+      }
+    } else {
+      data = await response.json()
+    }
+
     console.log('Z-Image API响应:', data)
 
     // 解析 z-image 响应格式
-    if (data.choices && data.choices.length > 0) {
-      const taskUuid = data.choices[0].message?.content || data.choices[0].message?.task_uuid
+    // 优先使用 task_id 字段，然后尝试 content 字段
+    const taskUuid = data.task_id || data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.task_uuid
 
-      if (taskUuid) {
-        // 返回任务 UUID，前端需要轮询获取结果
-        return NextResponse.json({
-          taskUuid: taskUuid,
-          pollUrl: `http://154.12.24.179:8000/api/v1/images/${taskUuid}`,
-          model: 'zimage-turbo',
-          usage: data.usage
-        })
-      }
+    if (taskUuid) {
+      // 返回任务 UUID，前端需要轮询获取结果
+      return NextResponse.json({
+        taskUuid: taskUuid,
+        pollUrl: `http://154.12.24.179:8000/api/v1/images/${taskUuid}`,
+        model: 'zimage-turbo',
+        usage: data.usage
+      })
     }
 
     return NextResponse.json({
