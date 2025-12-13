@@ -19,15 +19,13 @@ async function fetchWithAgent(url: string, options: any = {}): Promise<Response>
     
     return new Promise((resolve, reject) => {
       const parsedUrl = new urlModule.URL(url)
-      const requestOptions = {
+      const requestOptions: any = {
         hostname: parsedUrl.hostname,
         port: parsedUrl.port || 443,
         path: parsedUrl.pathname + parsedUrl.search,
         method: options.method || 'GET',
         headers: options.headers || {},
         rejectUnauthorized: false, // 忽略 SSL 证书验证
-        secureOptions: 0, // 允许所有 SSL/TLS 版本
-        minVersion: 'TLSv1', // 允许旧版本 TLS
       }
 
       const req = https.request(requestOptions, (res) => {
