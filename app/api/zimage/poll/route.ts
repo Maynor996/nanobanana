@@ -1,7 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server'
+import https from 'https'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 增加到 5 分钟，与主 API 一致
+
+// 自定义 fetch 函数，支持自定义 agent
+async function fetchWithAgent(url: string, options: any = {}): Promise<Response> {
+  // 对于 HTTPS URL，使用自定义 agent
+  if (url.startsWith('https://')) {
+    const https = await import('https')
+    const urlModule = await import('url')
+    
+    return new Promise((resolve, reject) => {
+      const parsedUrl = new urlModule.URL(url)
+      const requestOptions = {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || 443,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        rejectUnauthorized: false, // 忽略 SSL 证书验证
+        secureOptions: 0, // 允许所有 SSL/TLS 版本
+        minVersion: 'TLSv1', // 允许旧版本 TLS
+      }
+
+      const req = https.request(requestOptions, (res) => {
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        })
+        res.on('end', () => {
+          // 构造类似 fetch Response 的对象
+          const response = {
+            ok: res.statusCode! >= 200 && res.statusCode! < 300,
+            status: res.statusCode!,
+            statusText: res.statusMessage || '',
+            headers: new Headers(res.headers as any),
+            json: async () => JSON.parse(data),
+            text: async () => data,
+            clone: function() { return this }
+          } as Response
+          resolve(response)
+        })
+      })
+
+      req.on('error', (error) => {
+        reject(error)
+      })
+
+      if (options.body) {
+        req.write(options.body)
+      }
+      req.end()
+    })
+  } else {
+    // 对于 HTTP URL，使用标准 fetch
+    return fetch(url, options)
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,8 +71,8 @@ export async function GET(request: NextRequest) {
     console.log('轮询 Z-Image 任务状态:', taskUuid)
 
     // 轮询 z-image 结果 - 使用环境变量配置
-    const baseUrl = process.env.ZIMAGE_API_URL || 'http://154.12.24.179:8000'
-    const pollUrl = `${baseUrl}/v1/images/${taskUuid}`
+    const baseUrl = process.env.ZIMAGE_API_URL || 'https://zimage.run'
+    const pollUrl = `${baseUrl}/api/z-image/task/${taskUuid}`
 
     // 添加重试机制处理 504 错误
     let response: Response | null = null
@@ -27,12 +83,12 @@ export async function GET(request: NextRequest) {
       try {
         console.log(`Z-Image 轮询尝试 ${attempt}/${maxRetries}`)
 
-        response = await fetch(pollUrl, {
+        // 使用自定义 fetch 函数来处理 SSL 问题
+        response = await fetchWithAgent(pollUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
-          },
-          signal: AbortSignal.timeout(60000) // 60秒超时
+          }
         })
 
         if (response.ok || !response.status.toString().startsWith('5')) {
@@ -104,45 +160,59 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
     console.log('Z-Image 轮询响应:', data)
 
-    // 根据实际测试，z-image 返回的是包含 image_urls 字段的对象
+    // 解析 zimage.run 响应格式
+    // 响应格式: { success: true, data: { task: { taskStatus: "completed", resultUrl: "..." } } }
+    if (data.success && data.data && data.data.task) {
+      const task = data.data.task
+      
+      if (task.taskStatus === 'completed' && task.resultUrl) {
+        // 任务完成，返回图片 URL
+        return NextResponse.json({
+          status: 'completed',
+          images: [task.resultUrl],
+          imageUrls: [task.resultUrl],
+          task: task
+        })
+      } else if (task.taskStatus === 'processing' || task.taskStatus === 'pending') {
+        // 任务处理中
+        return NextResponse.json({
+          status: 'processing',
+          progress: task.progress || 0,
+          message: '正在处理中...',
+          task: task
+        })
+      } else if (task.taskStatus === 'failed') {
+        // 任务失败
+        return NextResponse.json({
+          status: 'failed',
+          error: task.errorMessage || '生成失败',
+          task: task
+        })
+      }
+    }
+
+    // 兼容旧格式
     if (data.status === 'completed' && data.image_urls && data.image_urls.length > 0) {
-      // 如果返回的是包含 image_urls 字段的对象
       return NextResponse.json({
         status: 'completed',
         images: data.image_urls,
         imageUrls: data.image_urls
       })
-    } else if (Array.isArray(data) && data.length > 0) {
-      // 如果返回的是图片数组（备用）
-      return NextResponse.json({
-        status: 'completed',
-        images: data,
-        imageUrls: data
-      })
-    } else if (data.images && Array.isArray(data.images)) {
-      // 如果返回的是包含 images 字段的对象（备用）
-      return NextResponse.json({
-        status: 'completed',
-        images: data.images,
-        imageUrls: data.images
-      })
     } else if (data.status === 'processing' || data.status === 'pending') {
-      // 如果还在处理中
       return NextResponse.json({
         status: 'processing',
         progress: data.progress || 0,
         message: data.message || '正在处理中...'
       })
     } else if (data.status === 'failed' || data.error) {
-      // 如果处理失败
       return NextResponse.json({
         status: 'failed',
         error: data.error || '生成失败'
       })
-    } else {
-      // 其他情况，尝试直接返回
-      return NextResponse.json(data)
     }
+
+    // 其他情况，尝试直接返回
+    return NextResponse.json(data)
 
   } catch (error) {
     console.error('Z-Image 轮询错误:', error)

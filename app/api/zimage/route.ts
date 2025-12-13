@@ -1,7 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server'
+import https from 'https'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300 // 5分钟超时，z-image 可能需要更长时间
+
+// 创建一个忽略 SSL 证书的 https agent
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false
+})
+
+// 自定义 fetch 函数，支持自定义 agent
+async function fetchWithAgent(url: string, options: any = {}): Promise<Response> {
+  // 对于 HTTPS URL，使用自定义 agent
+  if (url.startsWith('https://')) {
+    // 使用 node-fetch 或原生 https 模块
+    const https = await import('https')
+    const urlModule = await import('url')
+    
+    return new Promise((resolve, reject) => {
+      const parsedUrl = new urlModule.URL(url)
+      const requestOptions = {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || 443,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        rejectUnauthorized: false, // 忽略 SSL 证书验证
+        secureOptions: 0, // 允许所有 SSL/TLS 版本
+        minVersion: 'TLSv1', // 允许旧版本 TLS
+      }
+
+      const req = https.request(requestOptions, (res) => {
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        })
+        res.on('end', () => {
+          // 构造类似 fetch Response 的对象
+          const response = {
+            ok: res.statusCode! >= 200 && res.statusCode! < 300,
+            status: res.statusCode!,
+            statusText: res.statusMessage || '',
+            headers: new Headers(res.headers as any),
+            json: async () => JSON.parse(data),
+            text: async () => data,
+          } as Response
+          resolve(response)
+        })
+      })
+
+      req.on('error', (error) => {
+        reject(error)
+      })
+
+      if (options.body) {
+        req.write(options.body)
+      }
+      req.end()
+    })
+  } else {
+    // 对于 HTTP URL，使用标准 fetch
+    return fetch(url, options)
+  }
+}
 
 async function zimageHandler(request: NextRequest) {
   try {
@@ -13,8 +74,8 @@ async function zimageHandler(request: NextRequest) {
 
     // z-image API 端点 - 使用环境变量配置
     const apiUrl = process.env.ZIMAGE_API_URL
-      ? `${process.env.ZIMAGE_API_URL}/v1/chat/completions`
-      : 'http://154.12.24.179:8000/v1/chat/completions'
+      ? `${process.env.ZIMAGE_API_URL}/api/z-image/generate`
+      : 'https://zimage.run/api/z-image/generate'
 
     console.log('Z-Image API 请求:', {
       prompt,
@@ -25,24 +86,16 @@ async function zimageHandler(request: NextRequest) {
       batch_size
     })
 
-    // 构建请求体 - 使用 OpenAI 兼容格式
+    // 构建请求体 - 使用 zimage.run 的格式
     const requestBody: any = {
-      model: 'zimage-turbo',
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      extra_body: {
-        prompt: prompt,
-        negative_prompt: negative_prompt || process.env.ZIMAGE_DEFAULT_NEGATIVE_PROMPT || '模糊,水印,低质量,变形',
-        batch_size: batch_size,
-        width: size === '1k' ? 1024 : size === '2k' ? 2048 : 1360,
-        height: size === '1k' ? 1024 : size === '2k' ? 2048 : 1024,
-        steps: steps || parseInt(process.env.ZIMAGE_DEFAULT_STEPS || '8'),
-        cfg_scale: guidance_scale || parseFloat(process.env.ZIMAGE_DEFAULT_GUIDANCE_SCALE || '7')
-      }
+      prompt: prompt,
+      width: size === '1k' ? 1024 : size === '2k' ? 2048 : 1360,
+      height: size === '1k' ? 1024 : size === '2k' ? 2048 : 1024,
+      // zimage.run 不支持这些参数，但保留以备将来使用
+      // negative_prompt: negative_prompt || process.env.ZIMAGE_DEFAULT_NEGATIVE_PROMPT || '模糊,水印,低质量,变形',
+      // batch_size: batch_size,
+      // steps: steps || parseInt(process.env.ZIMAGE_DEFAULT_STEPS || '8'),
+      // cfg_scale: guidance_scale || parseFloat(process.env.ZIMAGE_DEFAULT_GUIDANCE_SCALE || '7')
     }
 
     // 如果有图片，添加到请求中（注意：z-image 主要支持文生图，图生图功能有限）
@@ -65,14 +118,13 @@ async function zimageHandler(request: NextRequest) {
       try {
         console.log(`Z-Image API 尝试 ${attempt}/${maxRetries}`)
 
-        response = await fetch(apiUrl, {
+        // 使用自定义 fetch 函数来处理 SSL 问题
+        response = await fetchWithAgent(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // z-image 不需要 API Key
           },
           body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(300000) // 5分钟超时
         })
 
         if (response.ok || response.status === 502) {
@@ -155,17 +207,18 @@ async function zimageHandler(request: NextRequest) {
 
     console.log('Z-Image API响应:', data)
 
-    // 解析 z-image 响应格式
-    // 优先使用 task_id 字段，然后尝试 content 字段
-    const taskUuid = data.task_id || data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.task_uuid
-
-    if (taskUuid) {
+    // 解析 zimage.run 响应格式
+    // 响应格式: { success: true, data: { uuid: "xxx", task: {...} } }
+    if (data.success && data.data && data.data.uuid) {
+      const taskUuid = data.data.uuid
+      const baseUrl = process.env.ZIMAGE_API_URL || 'https://zimage.run'
+      
       // 返回任务 UUID，前端需要轮询获取结果
       return NextResponse.json({
         taskUuid: taskUuid,
-        pollUrl: `http://154.12.24.179:8000/api/v1/images/${taskUuid}`,
-        model: 'zimage-turbo',
-        usage: data.usage
+        pollUrl: `${baseUrl}/api/z-image/task/${taskUuid}`,
+        model: 'zimage',
+        task: data.data.task
       })
     }
 
