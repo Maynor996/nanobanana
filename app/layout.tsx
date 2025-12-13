@@ -2,6 +2,7 @@ import './globals.css'
 import { LanguageProvider } from './i18n/LanguageContext'
 import AdsterraDirectLink from './components/AdsterraDirectLink'
 import SmartlinksAd from './components/SmartlinksAd'
+import Footer from './components/Footer'
 
 export const metadata = {
   title: 'Nano Banana - AI图像生成器 | AI Image Generator',
@@ -54,7 +55,7 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body style={{ margin: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <body style={{ margin: 0, fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: '60px' }}>
         <LanguageProvider>
           {children}
         </LanguageProvider>
@@ -63,6 +64,9 @@ export default function RootLayout({
 
         {/* Smartlinks 广告 */}
         <SmartlinksAd />
+
+        {/* 底部导航 */}
+        <Footer />
       </body>
     </html>
   )
