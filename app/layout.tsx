@@ -35,9 +35,36 @@ export default function RootLayout({
   const isProduction = process.env.NODE_ENV === 'production'
   const isValidAdsenseId = adsenseId && adsenseId !== 'ca-pub-xxxxxxxxxxxxxxxxx' && adsenseId !== 'ca-pub-1500176085727924'
 
+  // Google Analytics 4 配置
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+  const isValidGaId = gaMeasurementId && gaMeasurementId !== 'G-XXXXXXXXXX'
+
   return (
     <html lang="zh">
       <head>
+        {/* Google Analytics 4 脚本 - 仅在生产环境且有效ID时加载 */}
+        {isProduction && isValidGaId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${gaMeasurementId}', {
+                    page_title: document.title,
+                    page_location: window.location.href,
+                  });
+                `,
+              }}
+            />
+          </>
+        )}
+
         {/* Google AdSense 脚本 - 仅在生产环境且有效ID时加载 */}
         {isProduction && isValidAdsenseId && (
           <script
