@@ -89,9 +89,9 @@ async function zimageHandler(request: NextRequest) {
     let width: number, height: number
 
     if (size === '1k' || size === '2k') {
-      // 对于大尺寸，使用支持的最大尺寸
-      width = 768
-      height = 768
+      // 对于大尺寸，使用支持的最大方形尺寸
+      width = 512
+      height = 512
     } else if (size === 'portrait') {
       // 竖版
       width = 512

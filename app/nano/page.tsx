@@ -1529,6 +1529,60 @@ export default function NanoPage() {
               </div>
             </div>
 
+            {/* Size Selector for Z-Image */}
+            {model === 'zimage' && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h4 style={{ fontSize: '0.9rem', marginBottom: '1rem', color: '#888' }}>图片尺寸</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => setImageSize('1k')}
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: imageSize === '1k' ? '#f59e0b20' : 'transparent',
+                      border: imageSize === '1k' ? '1px solid #f59e0b' : '1px solid #333',
+                      borderRadius: '0.5rem',
+                      color: imageSize === '1k' ? '#f59e0b' : '#888',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    方形<br />512×512
+                  </button>
+                  <button
+                    onClick={() => setImageSize('portrait')}
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: imageSize === 'portrait' ? '#f59e0b20' : 'transparent',
+                      border: imageSize === 'portrait' ? '1px solid #f59e0b' : '1px solid #333',
+                      borderRadius: '0.5rem',
+                      color: imageSize === 'portrait' ? '#f59e0b' : '#888',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    竖版<br />512×768
+                  </button>
+                  <button
+                    onClick={() => setImageSize('landscape')}
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: imageSize === 'landscape' ? '#f59e0b20' : 'transparent',
+                      border: imageSize === 'landscape' ? '1px solid #f59e0b' : '1px solid #333',
+                      borderRadius: '0.5rem',
+                      color: imageSize === 'landscape' ? '#f59e0b' : '#888',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    横版<br />768×512
+                  </button>
+                </div>
+              </div>
+            )}
+
             {mode === 'upload' && (
               <div style={{ marginBottom: '1.5rem' }}>
                 <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
