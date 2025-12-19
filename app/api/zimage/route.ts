@@ -85,10 +85,31 @@ async function zimageHandler(request: NextRequest) {
     })
 
     // 构建请求体 - 使用 zimage.run 的格式
+    // 注意：zimage.run 对匿名用户只支持 512x512, 512x768, 768x512
+    let width: number, height: number
+
+    if (size === '1k' || size === '2k') {
+      // 对于大尺寸，使用支持的最大尺寸
+      width = 768
+      height = 768
+    } else if (size === 'portrait') {
+      // 竖版
+      width = 512
+      height = 768
+    } else if (size === 'landscape') {
+      // 横版
+      width = 768
+      height = 512
+    } else {
+      // 默认方形
+      width = 512
+      height = 512
+    }
+
     const requestBody: any = {
       prompt: prompt,
-      width: size === '1k' ? 1024 : size === '2k' ? 2048 : 1360,
-      height: size === '1k' ? 1024 : size === '2k' ? 2048 : 1024,
+      width: width,
+      height: height,
       // zimage.run 不支持这些参数，但保留以备将来使用
       // negative_prompt: negative_prompt || process.env.ZIMAGE_DEFAULT_NEGATIVE_PROMPT || '模糊,水印,低质量,变形',
       // batch_size: batch_size,
